@@ -9,9 +9,11 @@ Projects marked with:
 
 ### 🕹️ Games
 
-* [Microbe](https://github.com/zoul0813/zeal-microbe) by [@zoul0813](https://github.com/zoul0813): a colorful recreation of *Space Invaders* for Zeal 8-bit Computer!
+* [Microbe](https://github.com/zoul0813/zeal-microbe) by [@zoul0813](https://github.com/zoul0813): a colorful recreation of [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders) for Zeal 8-bit Computer!
 
-* [Snake](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK/tree/main/examples/snake): recreation of the famous *Snake* game for Zeal 8-bit Computer with the video board. This game is currently an example of the Zeal 8-bit VideoBoard SDK.
+* [Bricked](https://github.com/zoul0813/zeal-bricked) by [@zoul0813](https://github.com/zoul0813): an [Arkanoid](https://en.wikipedia.org/wiki/Arkanoid) / [Breakout](https://en.wikipedia.org/wiki/Breakout_(video_game)) inspired game for Zeal 8-bit Computer!
+
+* [Snake](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK/tree/main/examples/snake): recreation of the famous [Snake](https://en.wikipedia.org/wiki/Snake_(video_game_genre)) game for Zeal 8-bit Computer with the video board. This game is currently an example of the Zeal 8-bit VideoBoard SDK.
 
 * [2048](https://github.com/JasonMo1/2048-zos) by [@JasonMo1](https://github.com/JasonMo1): recreation of 2048 game for Zeal 8-bit Computer.
 
