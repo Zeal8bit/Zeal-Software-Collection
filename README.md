@@ -9,24 +9,20 @@ Projects marked with:
 
 ### 🕹️ Games
 
-| Title | Author | Description |
-| ----- | ------ | ----------- |
-| [Microbe](https://github.com/zoul0813/zeal-microbe) | [@zoul0813](https://github.com/zoul0813) | A colorful recreation of [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders) for Zeal 8-bit Computer! |
-| [Bricked](https://github.com/zoul0813/zeal-bricked) | [@zoul0813](https://github.com/zoul0813) | An [Arkanoid](https://en.wikipedia.org/wiki/Arkanoid) / [Breakout](https://en.wikipedia.org/wiki/Breakout_(video_game)) inspired game for Zeal 8-bit Computer! |
-| [Snake](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK/tree/main/examples/snake) | [@Zeal8bit](https://github.com/Zeal8bit) | Recreation of the famous [Snake](https://en.wikipedia.org/wiki/Snake_(video_game_genre)) game for Zeal 8-bit Computer with the video board. This game is currently an example of the Zeal 8-bit VideoBoard SDK. |
-| [2048](https://github.com/JasonMo1/2048-zos) | [@JasonMo1](https://github.com/JasonMo1) | Recreation of 2048 game for Zeal 8-bit Computer. |
-| [Game of Life](https://github.com/TurBoss/Zeal-8bit_conway) | [@TurBoss](https://github.com/TurBoss) | Implementation of Conway's Game of Life for Zeal 8-bit OS. |
-| [Closure](https://github.com/zoul0813/zeal-closure) | [@zoul0813](https://github.com/zoul0813) | A port of [Blockade](https://en.wikipedia.org/wiki/Blockade_(video_game)) from 1976 |
+* [Microbe](https://github.com/zoul0813/zeal-microbe) by [@zoul0813](https://github.com/zoul0813): A colorful recreation of [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders) for Zeal 8-bit Computer!
+* [Bricked](https://github.com/zoul0813/zeal-bricked) by [@zoul0813](https://github.com/zoul0813): An [Arkanoid](https://en.wikipedia.org/wiki/Arkanoid) / [Breakout](https://en.wikipedia.org/wiki/Breakout_(video_game)) inspired game for Zeal 8-bit Computer!
+* [Snake](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK/tree/main/examples/snake) by [@Zeal8bit](https://github.com/Zeal8bit): Recreation of the famous [Snake](https://en.wikipedia.org/wiki/Snake_(video_game_genre)) game for Zeal 8-bit Computer with the video board. This game is currently an example of the Zeal 8-bit VideoBoard SDK.
+* [2048](https://github.com/JasonMo1/2048-zos) by [@JasonMo1](https://github.com/JasonMo1): Recreation of 2048 game for Zeal 8-bit Computer.
+* [Game of Life](https://github.com/TurBoss/Zeal-8bit_conway) by [@TurBoss](https://github.com/TurBoss): Implementation of Conway's Game of Life for Zeal 8-bit OS.
+* [Closure](https://github.com/zoul0813/zeal-closure) by [@zoul0813](https://github.com/zoul0813): A port of [Blockade](https://en.wikipedia.org/wiki/Blockade_(video_game)) from 1976
 
 
 
 ### ⌨️ Software
 
-| Title | Author | Description |
-| ----- | ------ | ----------- |
-| [Zepto](https://github.com/Zeal8bit/Zepto) | [@Zeal8bit](https://github.com/Zeal8bit) | A clone of nano text editor written in Z80 assembly that runs natively on Zeal 8-bit OS. |
-| [Zeal Piano](https://github.com/zoul0813/zeal-piano) | [@zoul0813](https://github.com/zoul0813) | A playable Piano for your Zeal 8-bit Computer.  On-screen PS/2 keyboard mapped piano with 3-octaves, simple recording and playback. |
-| [Zeal Music Tracker](https://github.com/zoul0813/zeal-music-tracker) ⚠️ | [@zoul0813](https://github.com/zoul0813) | A music tracker built for Zeal 8-bit Computer. 4 voice, 16 pattern tracker for making music on your Zeal 8-bit Computer. |
+* [Zepto](https://github.com/Zeal8bit/Zepto) by [@Zeal8bit](https://github.com/Zeal8bit): A clone of nano text editor written in Z80 assembly that runs natively on Zeal 8-bit OS.
+* [Zeal Piano](https://github.com/zoul0813/zeal-piano) by [@zoul0813](https://github.com/zoul0813): A playable Piano for your Zeal 8-bit Computer.  On-screen PS/2 keyboard mapped piano with 3-octaves, simple recording and playback.
+* [Zeal Music Tracker](https://github.com/zoul0813/zeal-music-tracker) ⚠️ by [@zoul0813](https://github.com/zoul0813): A music tracker built for Zeal 8-bit Computer. 4 voice, 16 pattern tracker for making music on your Zeal 8-bit Computer.
 
 ### 🔤 Languages
 
