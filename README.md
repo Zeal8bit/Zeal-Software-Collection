@@ -49,6 +49,7 @@ Projects marked with:
 * [Zeal Bootloader](https://github.com/Zeal8bit/Zeal-Bootloader): a bootloader for Zeal 8-bit Computer, written in assembly. Supports multi-boot, boot from RAM, flashing the internal ROM (NOR Flash), and many more features.
 
 * [ZealFS](https://github.com/Zeal8bit/ZealFS): a file system for small memories, used natively by Zeal 8-bit OS kernel.
+   * [NanaZip](https://github.com/M2Team/NanaZip) now supports opening and extracting files from ZealFS disks images.
 
 ### 📦 Utilities
 
