@@ -16,7 +16,11 @@ Projects marked with:
 * [Game of Life](https://github.com/TurBoss/Zeal-8bit_conway) by [@TurBoss](https://github.com/TurBoss): Implementation of Conway's Game of Life for Zeal 8-bit OS.
 * [Closure](https://github.com/zoul0813/zeal-closure) by [@zoul0813](https://github.com/zoul0813): A port of [Blockade](https://en.wikipedia.org/wiki/Blockade_(video_game)) from 1976
 
+### 💾 Demos
 
+* [Zeal Boing](https://github.com/zoul0813/zeal-boing) by [@zoul0813](https://github.com/zoul0813): An Amiga Ball demo for Zeal 8-bit Computer
+* [Zeal Plasma](https://github.com/zoul0813/zeal-plasma) by [@zoul0813](https://github.com/zoul0813): A Plasma demo for Zeal 8-bit Computer
+* [Zeal Matrix](https://github.com/zoul0813/zeal-matrix/tree/v1.0.0) by [@zoul0813](https://github.com/zoul0813): A Matrix demo for Zeal 8-bit Computer
 
 ### ⌨️ Software
 
@@ -27,36 +31,27 @@ Projects marked with:
 ### 🔤 Languages
 
 * [Zealasm](https://github.com/Zeal8bit/Zealasm) by [@Zeal8bit](https://github.com/Zeal8bit): a Z80 assembler running natively on Zeal 8-bit OS.
-
 * [Zorth](https://github.com/Candid-Moe/Zorth) by [@Candid-Moe](https://github.com/Candid-Moe): a Forth interpreter running natively on Zeal 8-bit OS.
-
 * [Onomata](https://github.com/chiralos/onomata-src) by [@chiral](https://github.com/chiral): a custom stack-based language running on Zeal 8-bit OS.
 
 ### 🛠️ Development Tools
 
 * [Zeal VideoBoard SDK](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK): a development kit for the Zeal 8-bit Video board. It includes libraries and examples to run on a bare metal Zeal 8-bit Computer as well as examples to run on Zeal 8-bit OS.
-
 * [Zeal WebEmulator](https://github.com/Zeal8bit/Zeal-WebEmulator): a Zeal 8-bit Computer emulator that runs directly in the web browser.
-
 * [Zeal Dev Environment](https://github.com/zoul0813/zeal-dev-environment) by [@zoul0813](https://github.com/zoul0813): A development environment, running in Docker, that regroups the required repositories for developing programs for Zeal 8-bit Computer.
-
 * [Zeal Game Dev Kit](https://github.com/zoul0813/zeal-game-dev-kit) ⚠️ by [@zoul0813](https://github.com/zoul0813): A Game development kit for Zeal 8-bit Computer.
 
 ### 🖥️ System software
 
 * [Zeal 8-bit OS](https://github.com/Zeal8bit/Zeal-8-bit-OS): an operating system for Z80 computers, entirely written in assembly. This is the main operating system of Zeal 8-bit Computer.
-
 * [Zeal Bootloader](https://github.com/Zeal8bit/Zeal-Bootloader): a bootloader for Zeal 8-bit Computer, written in assembly. Supports multi-boot, boot from RAM, flashing the internal ROM (NOR Flash), and many more features.
-
 * [ZealFS](https://github.com/Zeal8bit/ZealFS): a file system for small memories, used natively by Zeal 8-bit OS kernel.
-   * [NanaZip](https://github.com/M2Team/NanaZip) now supports opening and extracting files from ZealFS disks images.
+* [NanaZip](https://github.com/M2Team/NanaZip) now supports opening and extracting files from ZealFS disks images.
 
 ### 📦 Utilities
 
 * [Zeal GBC Adapter](https://github.com/Zeal8bit/Zeal-GBC-Adapter) 🪛: a Zeal 8-bit OS program to backup Gameboy and Gameboy Color cartridges.
-
 * [Zeal SNES Adapter](https://github.com/Zeal8bit/Zeal-SNES-Adapter) 🪛: a program to interface one or two SNES controllers with the Zeal 8-bit Computers.
-
 * [Zeal CompacFlash](https://github.com/Zeal8bit/Zeal-CompactFlash) 🪛: a program to interface a CompactFlash with the Zeal 8-bit Computer.
 
 
