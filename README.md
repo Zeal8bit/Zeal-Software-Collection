@@ -26,7 +26,9 @@ Projects marked with:
 
 * [Zepto](https://github.com/Zeal8bit/Zepto) by [@Zeal8bit](https://github.com/Zeal8bit): A clone of nano text editor written in Z80 assembly that runs natively on Zeal 8-bit OS.
 * [Zeal Piano](https://github.com/zoul0813/zeal-piano) by [@zoul0813](https://github.com/zoul0813): A playable Piano for your Zeal 8-bit Computer.  On-screen PS/2 keyboard mapped piano with 3-octaves, simple recording and playback.
-* [Zeal Music Tracker](https://github.com/zoul0813/zeal-music-tracker) ⚠️ by [@zoul0813](https://github.com/zoul0813): A music tracker built for Zeal 8-bit Computer. 4 voice, 16 pattern tracker for making music on your Zeal 8-bit Computer.
+* [Zeal Music Tracker](https://github.com/zoul0813/zeal-music-tracker) by [@zoul0813](https://github.com/zoul0813): A music tracker built for Zeal 8-bit Computer. 4 voice, 16 pattern tracker for making music on your Zeal 8-bit Computer.
+* [Zeal Commander](https://github.com/zoul0813/zeal-commander) ⚠️ by [@zoul0813](https://github.com/zoul0813): A file manager built for Zeal 8-bit Computer.  Inspired by Midnight Commander.
+* [zeal-coreutils](https://github.com/zoul0813/zeal-coreutils) ⚠️ by [@zoul0813](https://github.com/zoul0813): An alternative to the default init.bin shell core commands, plus some extras.
 
 ### 🔤 Languages
 
@@ -40,13 +42,14 @@ Projects marked with:
 * [Zeal WebEmulator](https://github.com/Zeal8bit/Zeal-WebEmulator): a Zeal 8-bit Computer emulator that runs directly in the web browser.
 * [Zeal Dev Environment](https://github.com/zoul0813/zeal-dev-environment) by [@zoul0813](https://github.com/zoul0813): A development environment, running in Docker, that regroups the required repositories for developing programs for Zeal 8-bit Computer.
 * [Zeal Game Dev Kit](https://github.com/zoul0813/zeal-game-dev-kit) ⚠️ by [@zoul0813](https://github.com/zoul0813): A Game development kit for Zeal 8-bit Computer.
+* [Zeal Archiver](https://github.com/zoul0813/zeal-archiver) by [@zoul0813](https://github.com/zoul0813): An archive utility similar to TAR or WAD, for Zeal 8-bit software.
 
 ### 🖥️ System software
 
 * [Zeal 8-bit OS](https://github.com/Zeal8bit/Zeal-8-bit-OS): an operating system for Z80 computers, entirely written in assembly. This is the main operating system of Zeal 8-bit Computer.
 * [Zeal Bootloader](https://github.com/Zeal8bit/Zeal-Bootloader): a bootloader for Zeal 8-bit Computer, written in assembly. Supports multi-boot, boot from RAM, flashing the internal ROM (NOR Flash), and many more features.
 * [ZealFS](https://github.com/Zeal8bit/ZealFS): a file system for small memories, used natively by Zeal 8-bit OS kernel.
-* [NanaZip](https://github.com/M2Team/NanaZip) now supports opening and extracting files from ZealFS disks images.
+* [NanaZip](https://github.com/M2Team/NanaZip): An open source file archiver that now supports opening and extracting files from ZealFS v1 disk images.
 
 ### 📦 Utilities
 
