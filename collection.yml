@@ -1,0 +1,486 @@
+version: 1
+dependencies:
+  # Generated from https://github.com/Zeal8bit/Zeal-Software-Collection README.
+  # Entries use the ZDE deps schema, with README sections mapped into metadata.category.
+  # Links that point at a subdirectory or tagged tree are normalized into a cloneable repo URL.
+
+  # Games
+  - id: zoul0813/zeal-zfighter
+    repo: https://github.com/zoul0813/zeal-zfighter.git
+    metadata:
+      name: Z Fighter
+      category:
+        - game
+      description: 2D side-scrolling space shooter for Zeal 8-bit Computer
+    aliases:
+      - zfighter
+
+  - id: zoul0813/zeal-microbe
+    repo: https://github.com/zoul0813/zeal-microbe.git
+    metadata:
+      name: Microbe
+      category:
+        - game
+      description: Space Invaders-inspired game for Zeal 8-bit Computer
+    aliases:
+      - microbe
+
+  - id: zoul0813/zeal-bricked
+    repo: https://github.com/zoul0813/zeal-bricked.git
+    metadata:
+      name: Bricked
+      category:
+        - game
+      description: Arkanoid and Breakout-inspired game for Zeal 8-bit Computer
+    aliases:
+      - bricked
+
+  - id: Zeal8bit/Zeal-VideoBoard-SDK/examples/snake
+    repo: https://github.com/Zeal8bit/Zeal-VideoBoard-SDK.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+    metadata:
+      name: Snake
+      category:
+        - game
+      description: Snake example currently hosted inside the Zeal VideoBoard SDK
+      source_subpath: examples/snake
+      note: This is not a standalone repository in the source README
+    aliases:
+      - snake
+
+  - id: JasonMo1/2048-zos
+    repo: https://github.com/JasonMo1/2048-zos.git
+    metadata:
+      name: 2048
+      category:
+        - game
+      description: 2048 for Zeal 8-bit Computer
+    aliases:
+      - "2048"
+
+  - id: TurBoss/Zeal-8bit_conway
+    repo: https://github.com/TurBoss/Zeal-8bit_conway.git
+    metadata:
+      name: Game of Life
+      category:
+        - game
+      description: Conway's Game of Life for Zeal 8-bit OS
+    aliases:
+      - life
+      - game-of-life
+
+  - id: zoul0813/zeal-closure
+    repo: https://github.com/zoul0813/zeal-closure.git
+    metadata:
+      name: Closure
+      category:
+        - game
+      description: Blockade-inspired game for Zeal 8-bit Computer
+    aliases:
+      - closure
+
+  - id: Zeal8bit/Zeal-Chip8
+    repo: https://github.com/Zeal8bit/Zeal-Chip8.git
+    metadata:
+      name: CHIP-8
+      category:
+        - game
+      description: CHIP-8 emulator for Zeal 8-bit Computer
+      work_in_progress: true
+    aliases:
+      - chip8
+
+  # Demos
+  - id: zoul0813/zeal-boing
+    repo: https://github.com/zoul0813/zeal-boing.git
+    metadata:
+      name: Zeal Boing
+      category:
+        - demo
+      description: Boing Ball-inspired demo for Zeal 8-bit Computer
+    aliases:
+      - boing
+
+  - id: zoul0813/zeal-plasma
+    repo: https://github.com/zoul0813/zeal-plasma.git
+    metadata:
+      name: Zeal Plasma
+      category:
+        - demo
+      description: Text-mode plasma demo for Zeal
+    aliases:
+      - plasma
+
+  - id: zoul0813/zeal-matrix
+    repo: https://github.com/zoul0813/zeal-matrix.git
+    tag: v1.0.0
+    metadata:
+      name: Zeal Matrix
+      category:
+        - demo
+      description: Matrix demo for Zeal 8-bit Computer
+    aliases:
+      - matrix
+
+  - id: zoul0813/zeal-truchet
+    repo: https://github.com/zoul0813/zeal-truchet.git
+    metadata:
+      name: Zeal Truchet
+      category:
+        - demo
+      description: Truchet pattern demo using the Zeal video board DMA controller
+    aliases:
+      - truchet
+
+  # Software
+  - id: zoul0813/zeal-zshell
+    repo: https://github.com/zoul0813/zeal-zshell.git
+    build:
+      tool: cmake
+      artifacts:
+        - bin/
+      root: /apps
+    depends_on:
+      - zoul0813/zeal-coreutils
+    metadata:
+      name: ZShell
+      category:
+        - software
+      description: Shell for Zeal 8-bit OS with history and batch processing
+    aliases:
+      - zshell
+
+  - id: Zeal8bit/Zepto
+    repo: https://github.com/Zeal8bit/Zepto.git
+    metadata:
+      name: Zepto
+      category:
+        - software
+      description: Nano-inspired text editor written in Z80 assembly
+    aliases:
+      - zepto
+
+  - id: zoul0813/zeal-piano
+    repo: https://github.com/zoul0813/zeal-piano.git
+    metadata:
+      name: Zeal Piano
+      category:
+        - software
+      description: Playable piano for Zeal 8-bit Computer
+    aliases:
+      - piano
+
+  - id: zoul0813/zeal-music-tracker
+    repo: https://github.com/zoul0813/zeal-music-tracker.git
+    metadata:
+      name: Zeal Music Tracker
+      category:
+        - software
+      description: Music tracker for Zeal 8-bit Computer
+    aliases:
+      - music-tracker
+      - tracker
+
+  - id: zoul0813/zeal-commander
+    repo: https://github.com/zoul0813/zeal-commander.git
+    metadata:
+      name: Zeal Commander
+      category:
+        - software
+      description: Midnight Commander-inspired file manager for Zeal 8-bit Computer
+    aliases:
+      - commander
+
+  - id: zoul0813/zeal-coreutils
+    repo: https://github.com/zoul0813/zeal-coreutils.git
+    build:
+      tool: cmake
+      artifacts:
+        - bin/
+      root: /bin
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+    metadata:
+      name: Zeal Coreutils
+      category:
+        - software
+        - library
+      description: Alternative shell core commands and extra utilities
+    aliases:
+      - coreutils
+
+  - id: zoul0813/zeal-monitor
+    repo: https://github.com/zoul0813/zeal-monitor.git
+    metadata:
+      name: Zeal Monitor
+      category:
+        - software
+      description: Monitor program for Zeal 8-bit OS
+      work_in_progress: true
+    aliases:
+      - monitor
+
+  # Languages
+  - id: Zeal8bit/Zeal-BBC-Basic
+    repo: https://github.com/Zeal8bit/Zeal-BBC-Basic.git
+    branch: master
+    build:
+      artifacts:
+        - bbcbasic.bin
+    metadata:
+      name: BBC Basic
+      category:
+        - language
+      description: BBC Basic port running natively on Zeal 8-bit OS
+    aliases:
+      - bbc-basic
+
+  - id: Zeal8bit/Zealasm
+    repo: https://github.com/Zeal8bit/Zealasm.git
+    metadata:
+      name: Zealasm
+      category:
+        - language
+      description: Z80 assembler written in Z80 assembly
+    aliases:
+      - zealasm
+
+  - id: zoul0813/zeal-cc
+    repo: https://github.com/zoul0813/zeal-cc.git
+    metadata:
+      name: Zeal CC
+      category:
+        - language
+      description: C compiler for Zeal 8-bit OS
+      work_in_progress: true
+    aliases:
+      - zealcc
+
+  - id: Candid-Moe/Zorth
+    repo: https://github.com/Candid-Moe/Zorth.git
+    build:
+      commands:
+        - z80asm -Iinclude -s -l -m -g -b zorth.asm
+      artifacts:
+        - zorth.bin
+    metadata:
+      name: Zorth
+      category:
+        - language
+      description: Forth interpreter for Zeal 8-bit OS
+    aliases:
+      - zorth
+
+  - id: chiralos/onomata-src
+    repo: https://github.com/chiralos/onomata-src.git
+    metadata:
+      name: Onomata
+      category:
+        - language
+      description: Custom stack-based language for Zeal 8-bit OS
+    aliases:
+      - onomata
+
+  - id: zoul0813/zeal-mint
+    repo: https://github.com/zoul0813/zeal-mint.git
+    metadata:
+      name: Zeal Mint
+      category:
+        - language
+      description: MINT language port for Zeal 8-bit Computer
+      work_in_progress: true
+    aliases:
+      - mint
+
+  # Development tools
+  - id: Zeal8bit/Zeal-VideoBoard-SDK
+    repo: https://github.com/Zeal8bit/Zeal-VideoBoard-SDK.git
+    metadata:
+      name: Zeal VideoBoard SDK
+      category:
+        - library
+      description: SDK for the Zeal 8-bit Video Board
+    aliases:
+      - zvb
+      - video
+
+  - id: zoul0813/zeal-dev-environment
+    repo: https://github.com/zoul0813/zeal-dev-environment.git
+    zde: false
+    metadata:
+      name: Zeal Dev Environment
+      category:
+        - development-tool
+      description: Docker-based development environment for Zeal 8-bit Computer
+    aliases:
+      - zde
+
+  - id: zoul0813/zeal-game-dev-kit
+    repo: https://github.com/zoul0813/zeal-game-dev-kit.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+    metadata:
+      name: Zeal Game Dev Kit
+      category:
+        - library
+      description: Game development kit for Zeal 8-bit Computer
+    aliases:
+      - zgdk
+
+  - id: Zeal8bit/Zeal-NativeEmulator
+    repo: https://github.com/Zeal8bit/Zeal-NativeEmulator.git
+    build: false
+    metadata:
+      name: Zeal Native Emulator
+      category:
+        - development-tool
+      description: Native desktop emulator for Zeal 8-bit Computer
+    aliases:
+      - native-emulator
+
+  - id: Zeal8bit/Zeal-Playground
+    repo: https://github.com/Zeal8bit/Zeal-Playground.git
+    build: false
+    metadata:
+      name: Zeal Playground
+      category:
+        - development-tool
+        - service
+      description: Online platform to compile and emulate Zeal 8-bit programs
+    aliases:
+      - playground
+
+  - id: zoul0813/zeal-playground-vscode
+    repo: https://github.com/zoul0813/zeal-playground-vscode.git
+    build: false
+    zde: false
+    metadata:
+      name: Zeal VSCode Extension
+      category:
+        - development-tool
+      description: VS Code extension for developing and testing Zeal programs
+    aliases:
+      - vscode
+      - vscode-extension
+
+  - id: zoul0813/zeal-archiver
+    repo: https://github.com/zoul0813/zeal-archiver.git
+    metadata:
+      name: Zeal Archiver
+      category:
+        - library
+        - software
+      description: Archive utility for Zeal 8-bit software
+    aliases:
+      - zar
+
+  - id: Zeal8bit/Zeal-WebEmulator
+    repo: https://github.com/Zeal8bit/Zeal-WebEmulator.git
+    build: false
+    metadata:
+      name: Zeal WebEmulator
+      category:
+        - development-tool
+        - service
+      description: Deprecated browser-based emulator for Zeal 8-bit Computer
+      deprecated: true
+    aliases:
+      - emulator
+      - web-emulator
+
+  # System software
+  - id: Zeal8bit/Zeal-8-bit-OS
+    repo: https://github.com/Zeal8bit/Zeal-8-bit-OS.git
+    metadata:
+      name: Zeal 8-bit OS
+      category:
+        - core
+      description: Operating system for Z80 computers written in assembly
+    aliases:
+      - zos
+      - zealos
+
+  - id: Zeal8bit/Zeal-Bootloader
+    repo: https://github.com/Zeal8bit/Zeal-Bootloader.git
+    metadata:
+      name: Zeal Bootloader
+      category:
+        - core
+      description: Bootloader for Zeal 8-bit Computer
+    aliases:
+      - bootloader
+
+  - id: Zeal8bit/ZealFS
+    repo: https://github.com/Zeal8bit/ZealFS.git
+    build:
+      tool: cmake
+    metadata:
+      name: ZealFS
+      category:
+        - development-tool
+        - library
+      description: File system for small storage devices used by Zeal 8-bit OS
+    aliases:
+      - zealfs
+
+  - id: Zeal8bit/Zeal-Disk-Tool
+    repo: https://github.com/Zeal8bit/Zeal-Disk-Tool.git
+    build: false
+    metadata:
+      name: Zeal-Disk-Tool
+      category:
+        - development-tool
+      description: GUI utility to create and manage ZealFS v2 partitions
+    aliases:
+      - disk-tool
+
+  - id: M2Team/NanaZip
+    repo: https://github.com/M2Team/NanaZip.git
+    zde: false
+    build: false
+    metadata:
+      name: NanaZip
+      category:
+        - extra
+      description: Archive utility that supports ZealFS v1 images
+    aliases:
+      - nanazip
+
+  # Utilities
+  - id: Zeal8bit/Zeal-GBC-Adapter
+    repo: https://github.com/Zeal8bit/Zeal-GBC-Adapter.git
+    build: false
+    metadata:
+      name: Zeal GBC Adapter
+      category:
+        - hardware
+      description: Game Boy and Game Boy Color cartridge adapter project
+      hardware_extension: true
+    aliases:
+      - gbc-adapter
+
+  - id: Zeal8bit/Zeal-SNES-Adapter
+    repo: https://github.com/Zeal8bit/Zeal-SNES-Adapter.git
+    build: false
+    metadata:
+      name: Zeal SNES Adapter
+      category:
+        - hardware
+      description: SNES controller adapter for Zeal 8-bit Computer
+      hardware_extension: true
+    aliases:
+      - snes-adapter
+
+  - id: Zeal8bit/Zeal-CompactFlash
+    repo: https://github.com/Zeal8bit/Zeal-CompactFlash.git
+    build: false
+    metadata:
+      name: Zeal CompactFlash
+      category:
+        - hardware
+      description: CompactFlash interface project for Zeal 8-bit Computer
+      hardware_extension: true
+    aliases:
+      - compactflash
+      - cf
