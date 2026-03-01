@@ -1,6 +1,5 @@
 version: 1
 dependencies:
-  # Generated from https://github.com/Zeal8bit/Zeal-Software-Collection README.
   # Entries use the ZDE deps schema, with README sections mapped into metadata.category.
   # Links that point at a subdirectory or tagged tree are normalized into a cloneable repo URL.
 
