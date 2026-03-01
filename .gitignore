@@ -1,3 +1,5 @@
 images/
 release/
 _site/
+pnpm-lock.yaml
+node_modules/

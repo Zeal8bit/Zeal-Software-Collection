@@ -283,6 +283,7 @@ dependencies:
 
   - id: zoul0813/zeal-mint
     repo: https://github.com/zoul0813/zeal-mint.git
+    branch: zeal8bit
     metadata:
       name: Zeal Mint
       category:
