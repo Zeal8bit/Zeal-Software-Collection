@@ -1,10 +1,13 @@
 const yaml = require("yaml");
 const fs = require("fs");
+const ejsPlugin = require("@11ty/eleventy-plugin-ejs");
 
 module.exports = function (eleventyConfig) {
   eleventyConfig.addDataExtension("yml", (contents) => {
     return yaml.parse(contents);
   });
+
+  eleventyConfig.addPlugin(ejsPlugin);
 
   eleventyConfig.addFilter("jsonify", (data) => {
     return JSON.stringify(data, null, 2);
@@ -54,4 +57,13 @@ module.exports = function (eleventyConfig) {
     const ret = { categories: grouped, raw: data };
     return ret;
   });
+
+  return {
+    dir: {
+      input: "src",
+      output: "_site",
+      includes: "_includes",
+      data: "_data"
+    }
+  };
 };

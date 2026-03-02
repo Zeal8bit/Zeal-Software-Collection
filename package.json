@@ -14,5 +14,8 @@
   "devDependencies": {
     "@11ty/eleventy": "^3.1.2",
     "yaml": "^2.8.2"
+  },
+  "dependencies": {
+    "@11ty/eleventy-plugin-ejs": "^1.0.0"
   }
 }
