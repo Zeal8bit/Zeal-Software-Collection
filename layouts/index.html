@@ -1,0 +1,135 @@
+{{- $categories := slice "game" "demo" "software" "library" "language" "development-tool" "service" "core" "extra" "hardware" -}}
+{{- $emojis := dict
+  "game" "🕹️"
+  "demo" "💾"
+  "software" "💻"
+  "library" "📚"
+  "development-tool" "🛠️"
+  "language" "🔤"
+  "service" "🔧"
+  "core" "⚡"
+  "extra" "✨"
+  "hardware" "⚙️"
+-}}
+{{- $font := resources.Get "fonts/BigBlueTermPlusNerdFontMono-Regular.ttf" | resources.Copy "fonts/BigBlueTermPlusNerdFontMono-Regular.ttf" -}}
+{{- $fontLicense := resources.Get "fonts/BigBlueTerminal-LICENSE.txt" | resources.Copy "fonts/BigBlueTerminal-LICENSE.txt" -}}
+{{- $fontLicenseURL := $fontLicense.RelPermalink -}}
+{{- $script := resources.Get "js/index.js" | js.Build (dict "targetPath" "js/index.min.js" "minify" true) -}}
+{{- $styleSource := resources.Get "scss/index.scss" | resources.ExecuteAsTemplate "scss/index.scss" (dict "fontURL" $font.RelPermalink) -}}
+{{- $style := $styleSource | css.Sass (dict "targetPath" "css/index.min.css" "outputStyle" "compressed") -}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zeal 8-bit Computer Software Collection</title>
+    <link rel="stylesheet" href="{{ $style.RelPermalink }}">
+  </head>
+  <body>
+    <main class="screen">
+      <div class="titlebar">
+        <span>ZEAL BBS // NODE 01</span>
+        <span>COLLECTION.MSG</span>
+      </div>
+
+      <p class="system-line">CONNECT 9600 BAUD | ANSI ENABLED | MESSAGE BASE: SOFTWARE COLLECTION</p>
+
+      <h1>Zeal 8-bit Computer Software Collection</h1>
+
+      <p class="intro">In this repository, you will find a list of existing software for Zeal 8-bit Computer.</p>
+
+      <section class="filter-panel" aria-label="Collection filters">
+        <div class="filter-panel__row">
+          <label class="filter-panel__field">
+            <span class="filter-panel__label">CATEGORY</span>
+            <select id="collection-category" class="terminal-control">
+              <option value="">ALL</option>
+              {{- range $category := $categories }}
+                {{- $label := printf "%s%s" (upper (substr $category 0 1)) (substr $category 1) -}}
+                <option value="{{ $category }}">{{ $label }}</option>
+              {{- end }}
+            </select>
+          </label>
+
+          <label class="filter-panel__field filter-panel__field--wide">
+            <span class="filter-panel__label">SEARCH</span>
+            <input
+              id="collection-search"
+              class="terminal-control"
+              type="search"
+              placeholder="TYPE PROGRAM NAME"
+              autocomplete="off"
+              spellcheck="false"
+            >
+          </label>
+        </div>
+        <p id="collection-status" class="filter-panel__status" aria-live="polite">READY. SHOWING ALL ENTRIES.</p>
+      </section>
+
+      <ul class="legend">
+        <li><span class="sprite-icon" aria-hidden="true">🪛</span> Hardware extension required.</li>
+        <li><span class="sprite-icon" aria-hidden="true">⚠️</span> Work in progress, may not be usable yet.</li>
+      </ul>
+
+      {{- range $category := $categories }}
+        {{- $label := printf "%s%s" (upper (substr $category 0 1)) (substr $category 1) -}}
+        <section data-category="{{ $category }}">
+          <h2><span class="sprite-icon" aria-hidden="true">{{ index $emojis $category }}</span> {{ $label }} BOARD</h2>
+          <ul class="collection">
+            {{- range $.Site.Data.collection.dependencies }}
+              {{- $metadata := .metadata -}}
+              {{- $flags := default (slice) $metadata.flags -}}
+              {{- $yaml := . | transform.Remarshal "yaml" -}}
+              {{- if in $metadata.category $category }}
+                <li
+                  data-name="{{ lower $metadata.name }}"
+                  {{ if in $flags "deprecated" }}class="deprecated"{{ end }}
+                >
+                  {{- if in $flags "deprecated" }}<del>{{ end -}}
+                  <a href="{{ .repo }}">{{ $metadata.name }}</a>
+                  by
+                  {{- with $metadata.author.link }}
+                    <a href="{{ . }}">@{{ $metadata.author.name }}</a>
+                  {{- else }}
+                    @{{ $metadata.author.name }}
+                  {{- end }}
+                  {{- if in $flags "work_in_progress" }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
+                  {{- if in $flags "hardware_extension" }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
+                  : {{ $metadata.description }}
+                  <button
+                    class="view-button"
+                    type="button"
+                    data-entry-name="{{ $metadata.name }}"
+                    aria-haspopup="dialog"
+                  >
+                    VIEW
+                  </button>
+                  <pre class="entry-yaml" hidden>{{ $yaml }}</pre>
+                  {{- if in $flags "deprecated" }}</del> <strong>DEPRECATED</strong>{{ end -}}
+                </li>
+              {{- end }}
+            {{- end }}
+          </ul>
+        </section>
+      {{- end }}
+    </main>
+    <div id="entry-modal" class="bbs-modal" hidden>
+      <div class="bbs-modal__backdrop" data-close-modal></div>
+      <section
+        class="bbs-modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="entry-modal-title"
+        tabindex="-1"
+      >
+        <div class="bbs-modal__titlebar">
+          <span id="entry-modal-title">PROJECT RECORD</span>
+          <button class="bbs-modal__close" type="button" data-close-modal aria-label="Close dialog">[X]</button>
+        </div>
+        <p class="bbs-modal__status">INTERSTITIAL BUFFER READY :: PRESS ESC TO EXIT</p>
+        <pre id="entry-modal-content" class="bbs-modal__content"></pre>
+      </section>
+    </div>
+    <script src="{{ $script.RelPermalink }}"></script>
+  </body>
+</html>

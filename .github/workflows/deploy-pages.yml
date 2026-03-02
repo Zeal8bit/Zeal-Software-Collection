@@ -20,22 +20,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
         with:
-          version: 10.28.2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
+          hugo-version: '0.157.0'
+          extended: true
 
       - name: Build site
-        run: pnpm run build
+        run: hugo
 
       - name: Deploy site
         id: deploy

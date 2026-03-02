@@ -1,0 +1,33 @@
+baseURL = "/"
+publishDir = "_site"
+disablePathToLower = true
+disableKinds = ["rss", "section", "taxonomy", "term", "sitemap", "robotsTXT"]
+
+[mediaTypes."text/markdown"]
+suffixes = ["md"]
+
+[outputFormats.README]
+mediaType = "text/markdown"
+baseName = "README"
+isPlainText = true
+notAlternative = true
+
+[outputs]
+home = ["HTML", "README"]
+
+[module]
+[[module.mounts]]
+source = "layouts"
+target = "layouts"
+
+[[module.mounts]]
+source = "assets"
+target = "assets"
+
+[[module.mounts]]
+source = "images"
+target = "static/images"
+
+[[module.mounts]]
+source = "collection.yml"
+target = "data/collection.yml"

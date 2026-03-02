@@ -1,5 +1,4 @@
-images/
 release/
 _site/
-pnpm-lock.yaml
-node_modules/
+.hugo_build.lock
+resources/_gen
