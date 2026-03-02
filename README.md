@@ -59,14 +59,14 @@ Projects marked with:
 * [Zeal Native Emulator](https://github.com/Zeal8bit/Zeal-NativeEmulator.git) by [@Zeal8bit](https://github.com/Zeal8bit): Native desktop emulator for Zeal 8-bit Computer
 * [Zeal Playground](https://github.com/Zeal8bit/Zeal-Playground.git) by [@Zeal8bit](https://github.com/Zeal8bit): Online platform to compile and emulate Zeal 8-bit programs
 * [Zeal VSCode Extension](https://github.com/zoul0813/zeal-playground-vscode.git) by [@zoul0813](https://github.com/zoul0813): VS Code extension for developing and testing Zeal programs
-* [Zeal WebEmulator](https://github.com/Zeal8bit/Zeal-WebEmulator.git) by [@Zeal8bit](https://github.com/Zeal8bit): Deprecated browser-based emulator for Zeal 8-bit Computer
+* ~~[Zeal WebEmulator](https://github.com/Zeal8bit/Zeal-WebEmulator.git) by [@Zeal8bit](https://github.com/Zeal8bit): Deprecated browser-based emulator for Zeal 8-bit Computer~~ **DEPRECATED**
 * [ZealFS](https://github.com/Zeal8bit/ZealFS.git) by [@Zeal8bit](https://github.com/Zeal8bit): File system for small storage devices used by Zeal 8-bit OS
 * [Zeal-Disk-Tool](https://github.com/Zeal8bit/Zeal-Disk-Tool.git) by [@Zeal8bit](https://github.com/Zeal8bit): GUI utility to create and manage ZealFS v2 partitions
 
 ### 🔧 Service
 
 * [Zeal Playground](https://github.com/Zeal8bit/Zeal-Playground.git) by [@Zeal8bit](https://github.com/Zeal8bit): Online platform to compile and emulate Zeal 8-bit programs
-* [Zeal WebEmulator](https://github.com/Zeal8bit/Zeal-WebEmulator.git) by [@Zeal8bit](https://github.com/Zeal8bit): Deprecated browser-based emulator for Zeal 8-bit Computer
+* ~~[Zeal WebEmulator](https://github.com/Zeal8bit/Zeal-WebEmulator.git) by [@Zeal8bit](https://github.com/Zeal8bit): Deprecated browser-based emulator for Zeal 8-bit Computer~~ **DEPRECATED**
 
 ### ⚡ Core
 

@@ -4,7 +4,7 @@ permalink: /README.md
 ---
 
 {%- macro entry(name, repo, author, author_link, description, wip=false, hw=false, deprecated=false) %}
-* {% if deprecated %}~~{% endif %}[{{ name | safe }}]({{ repo }}) by [{{ author }}]({{ author_link }}){% if wip %} ⚠️{% endif %}{% if hw %} 🪛{% endif %}: {{ description | safe }}{% if deprecated %}~~ **DEPRECATED**{% endif -%}
+* {% if deprecated %}~~{% endif %}[{{ name | safe }}]({{ repo }}) by [@{{ author }}]({{ author_link }}){% if wip %} ⚠️{% endif %}{% if hw %} 🪛{% endif %}: {{ description | safe }}{% if deprecated %}~~ **DEPRECATED**{% endif -%}
 {% endmacro -%}
 
 ## Zeal 8-bit Computer software collection
@@ -18,10 +18,14 @@ Projects marked with:
 {% for category, items in collection.categories %}
 ### {{ category | capitalize | pre_emoji }}
 {% for item in items -%}
-{{ entry(item.metadata.name, item.repo,
-         item.author, item.author_link,
-         item.metadata.description,
-         item.metadata.work_in_progress, item.metadata.hardware_extension, item.deprecated) }}
+{%- set metadata = item.metadata -%}
+{{ entry(metadata.name, item.repo,
+         metadata.author.name, metadata.author.link,
+         metadata.description,
+         metadata.flags | includes("work_in_progress"),
+         metadata.flags | includes("hardware_extension"),
+         metadata.flags | includes("deprecated"))
+}}
 {%- endfor %}
 {% endfor %}
 

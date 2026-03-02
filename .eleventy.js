@@ -6,6 +6,14 @@ module.exports = function (eleventyConfig) {
     return yaml.parse(contents);
   });
 
+  eleventyConfig.addFilter("jsonify", (data) => {
+    return JSON.stringify(data, null, 2);
+  });
+
+  eleventyConfig.addFilter('includes', function(arr, value) {
+    return arr && arr.indexOf(value) !== -1;
+  });
+
   eleventyConfig.addFilter("pre_emoji", (text) => {
     const emojis = {"game" : "🕹️",
                    "demo"  : "💾",
@@ -31,19 +39,6 @@ module.exports = function (eleventyConfig) {
     const grouped = {};
 
     for (const dep of data.dependencies || []) {
-      /* Generate the author field if it doesn't exist */
-      if (!dep.author) {
-        /* Use the `id` field, cut the `/` and keep the first part. For the link to the profile,
-         * use the repo, cut the last `/<repo>.git` */
-        try {
-          dep.author = "@" + dep.id.split("/")[0];
-          dep.author_link = dep.repo ? dep.repo.replace(/\/[^\/]+\.git$/, "") : null;
-        } catch (e) {
-          dep.author = "Unknown";
-          dep.author_link = "#";
-        }
-      }
-
       const categories = dep.metadata?.category || [];
 
       /* Browse all the categories of the current entry */
