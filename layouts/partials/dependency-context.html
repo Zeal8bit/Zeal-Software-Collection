@@ -1,0 +1,11 @@
+{{- $metadata := .metadata -}}
+{{- $flags := default (slice) $metadata.flags -}}
+{{- return (dict
+  "metadata" $metadata
+  "flags" $flags
+  "authorName" $metadata.author.name
+  "authorLink" (default "" $metadata.author.link)
+  "isDeprecated" (in $flags "deprecated")
+  "isWorkInProgress" (in $flags "work_in_progress")
+  "hasHardwareExtension" (in $flags "hardware_extension")
+) -}}

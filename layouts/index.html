@@ -1,16 +1,4 @@
-{{- $categories := slice "game" "demo" "software" "library" "language" "development-tool" "service" "core" "extra" "hardware" -}}
-{{- $emojis := dict
-  "game" "🕹️"
-  "demo" "💾"
-  "software" "💻"
-  "library" "📚"
-  "development-tool" "🛠️"
-  "language" "🔤"
-  "service" "🔧"
-  "core" "⚡"
-  "extra" "✨"
-  "hardware" "⚙️"
--}}
+{{- $categories := partial "categories.html" . -}}
 {{- $font := resources.Get "fonts/BigBlueTermPlusNerdFontMono-Regular.ttf" | resources.Copy "fonts/BigBlueTermPlusNerdFontMono-Regular.ttf" -}}
 {{- $fontLicense := resources.Get "fonts/BigBlueTerminal-LICENSE.txt" | resources.Copy "fonts/BigBlueTerminal-LICENSE.txt" -}}
 {{- $fontLicenseURL := $fontLicense.RelPermalink -}}
@@ -45,7 +33,7 @@
             <select id="collection-category" class="terminal-control">
               <option value="">ALL</option>
               {{- range $category := $categories }}
-                {{- $label := printf "%s%s" (upper (substr $category 0 1)) (substr $category 1) -}}
+                {{- $label := partial "category-label.html" $category -}}
                 <option value="{{ $category }}">{{ $label }}</option>
               {{- end }}
             </select>
@@ -72,29 +60,30 @@
       </ul>
 
       {{- range $category := $categories }}
-        {{- $label := printf "%s%s" (upper (substr $category 0 1)) (substr $category 1) -}}
+        {{- $label := partial "category-label.html" $category -}}
+        {{- $emoji := partial "category-emoji.html" $category -}}
+        {{- $entries := partial "dependencies-for-category.html" (dict "dependencies" $.Site.Data.collection.dependencies "category" $category) -}}
         <section data-category="{{ $category }}">
-          <h2><span class="sprite-icon" aria-hidden="true">{{ index $emojis $category }}</span> {{ $label }} BOARD</h2>
+          <h2><span class="sprite-icon" aria-hidden="true">{{ $emoji }}</span> {{ $label }} BOARD</h2>
           <ul class="collection">
-            {{- range $.Site.Data.collection.dependencies }}
-              {{- $metadata := .metadata -}}
-              {{- $flags := default (slice) $metadata.flags -}}
-              {{- $yaml := . | transform.Remarshal "yaml" -}}
-              {{- if in $metadata.category $category }}
+            {{- range $entry := $entries }}
+              {{- $dependency := partial "dependency-context.html" $entry -}}
+              {{- $metadata := $dependency.metadata -}}
+              {{- $yaml := $entry | transform.Remarshal "yaml" -}}
                 <li
                   data-name="{{ lower $metadata.name }}"
-                  {{ if in $flags "deprecated" }}class="deprecated"{{ end }}
+                  {{ if $dependency.isDeprecated }}class="deprecated"{{ end }}
                 >
-                  {{- if in $flags "deprecated" }}<del>{{ end -}}
-                  <a href="{{ .repo }}">{{ $metadata.name }}</a>
+                  {{- if $dependency.isDeprecated }}<del>{{ end -}}
+                  <a href="{{ $entry.repo }}">{{ $metadata.name }}</a>
                   by
-                  {{- with $metadata.author.link }}
-                    <a href="{{ . }}">@{{ $metadata.author.name }}</a>
+                  {{- with $dependency.authorLink }}
+                    <a href="{{ . }}">@{{ $dependency.authorName }}</a>
                   {{- else }}
-                    @{{ $metadata.author.name }}
+                    @{{ $dependency.authorName }}
                   {{- end }}
-                  {{- if in $flags "work_in_progress" }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
-                  {{- if in $flags "hardware_extension" }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
+                  {{- if $dependency.isWorkInProgress }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
+                  {{- if $dependency.hasHardwareExtension }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
                   : {{ $metadata.description }}
                   <button
                     class="view-button"
@@ -105,9 +94,8 @@
                     VIEW
                   </button>
                   <pre class="entry-yaml" hidden>{{ $yaml }}</pre>
-                  {{- if in $flags "deprecated" }}</del> <strong>DEPRECATED</strong>{{ end -}}
+                  {{- if $dependency.isDeprecated }}</del> <strong>DEPRECATED</strong>{{ end -}}
                 </li>
-              {{- end }}
             {{- end }}
           </ul>
         </section>

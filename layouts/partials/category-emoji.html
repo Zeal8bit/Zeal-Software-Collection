@@ -1,0 +1,13 @@
+{{- $emojis := dict
+  "game" "🕹️"
+  "demo" "💾"
+  "software" "💻"
+  "library" "📚"
+  "development-tool" "🛠️"
+  "language" "🔤"
+  "service" "🔧"
+  "core" "⚡"
+  "extra" "✨"
+  "hardware" "⚙️"
+-}}
+{{- return (index $emojis .) -}}

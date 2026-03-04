@@ -1,0 +1,8 @@
+{{- $entries := slice -}}
+{{- $category := .category -}}
+{{- range .dependencies -}}
+  {{- if in .metadata.category $category -}}
+    {{- $entries = $entries | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- return $entries -}}
