@@ -1,16 +1,16 @@
 {{- $page := .page -}}
-{{- $project := default (dict) $page.Params.project -}}
-{{- $metadata := default (dict) $project.metadata -}}
-{{- $author := default (dict) $metadata.author -}}
+{{- $project := default (dict) (index $page.Params "project") -}}
+{{- $metadata := default (dict) (index $project "metadata") -}}
+{{- $author := default (dict) (index $metadata "author") -}}
 {{- $screenshots := slice -}}
-{{- with $metadata.screenshot -}}
+{{- with (index $metadata "screenshot") -}}
   {{- if reflect.IsSlice . -}}
     {{- $screenshots = . -}}
   {{- else -}}
     {{- $screenshots = $screenshots | append . -}}
   {{- end -}}
 {{- end -}}
-{{- with $metadata.screenshots -}}
+{{- with (index $metadata "screenshots") -}}
   {{- if reflect.IsSlice . -}}
     {{- range . -}}
       {{- $screenshots = $screenshots | append . -}}

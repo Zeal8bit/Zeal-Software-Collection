@@ -11,13 +11,14 @@
     {{- end }}
     <ul class="collection">
       {{- range $page := $entries }}
-        {{- $project := default (dict) $page.Params.project -}}
-        {{- $metadata := default (dict) $project.metadata -}}
-        {{- $entryID := default $project.repo $project.id -}}
-        {{- $flags := default (slice) $metadata.flags -}}
-        {{- $authorName := $metadata.author.name -}}
-        {{- $authorLink := $metadata.author.link -}}
-        {{- $description := default $page.Params.description $metadata.description -}}
+        {{- $project := default (dict) (index $page.Params "project") -}}
+        {{- $metadata := default (dict) (index $project "metadata") -}}
+        {{- $author := default (dict) (index $metadata "author") -}}
+        {{- $entryID := default (index $project "repo") (index $project "id") -}}
+        {{- $flags := default (slice) (index $metadata "flags") -}}
+        {{- $authorName := index $author "name" -}}
+        {{- $authorLink := index $author "link" -}}
+        {{- $description := default $page.Params.description (index $metadata "description") -}}
         {{- $isDeprecated := in $flags "deprecated" -}}
         {{- $isWorkInProgress := in $flags "work_in_progress" -}}
         {{- $hasHardwareExtension := in $flags "hardware_extension" -}}
@@ -26,7 +27,7 @@
             {{ if $isDeprecated }}class="deprecated"{{ end }}
           >
             {{- if $isDeprecated }}<del>{{ end -}}
-            <a href="{{ $project.repo }}">{{ $page.Title }}</a>
+            <a href="{{ index $project "repo" }}">{{ $page.Title }}</a>
             by
             {{- with $authorLink }}
               <a href="{{ . }}">@{{ $authorName }}</a>
