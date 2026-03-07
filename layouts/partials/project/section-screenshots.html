@@ -1,16 +1,48 @@
 {{- $title := .title -}}
 {{- $screenshots := default (slice) .screenshots -}}
-{{- with $screenshots }}
-  {{- if gt (len .) 0 }}
-    <section>
-      <h2>Screenshot{{ if gt (len .) 1 }}s{{ end }}</h2>
-      <div class="bbs-modal__screenshots-list">
-        {{- range $index, $url := . }}
-          <a class="bbs-modal__screenshot" href="{{ $url }}" target="_blank" rel="noreferrer noopener">
-            <img src="{{ $url }}" alt="{{ $title }} screenshot {{ add $index 1 }}" loading="lazy">
-          </a>
-        {{- end }}
-      </div>
-    </section>
-  {{- end }}
+{{- $videos := default (slice) .videos -}}
+{{- $mode := default "page" .mode -}}
+{{- $mediaCount := add (len $videos) (len $screenshots) -}}
+{{- if or (gt (len $screenshots) 0) (gt (len $videos) 0) }}
+  <section>
+    <h2 class="bbs-media__title">
+      <span>SCREENS ({{ $mediaCount }} screens)</span>
+      {{- if and (eq $mode "modal") (gt $mediaCount 1) }}
+        <button
+          class="bbs-media__toggle"
+          type="button"
+          data-media-toggle
+          aria-pressed="false"
+          aria-label="Show all media"
+        >
+          [+]
+        </button>
+      {{- end }}
+    </h2>
+    <div class="bbs-modal__screenshots-list">
+      {{- range $index, $url := $videos }}
+        <div class="bbs-modal__screenshot bbs-modal__screenshot--video is-loading">
+          <span class="bbs-modal__video-indicator" aria-hidden="true">VIDEO</span>
+          <span class="bbs-modal__video-loading" aria-hidden="true">LOADING...</span>
+          <video
+            preload="metadata"
+            playsinline
+            muted
+            loop
+            tabindex="0"
+            aria-label="{{ $title }} video {{ add $index 1 }}"
+          >
+            <source src="{{ $url }}">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      {{- end }}
+      {{- range $index, $url := $screenshots }}
+        <a class="bbs-modal__screenshot bbs-modal__screenshot--image" href="{{ $url }}" target="_blank" rel="noreferrer noopener">
+          <span class="bbs-modal__media-indicator" aria-hidden="true">SCREEN</span>
+          <img src="{{ $url }}" alt="{{ $title }} screenshot {{ add $index 1 }}" loading="lazy">
+        </a>
+      {{- end }}
+    </div>
+  </section>
 {{- end }}

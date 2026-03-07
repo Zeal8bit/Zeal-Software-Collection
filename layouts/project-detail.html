@@ -11,5 +11,8 @@
 
   {{- partial "project/project-sections.html" (dict "page" . "mode" "page") -}}
 
-  <p><a href="{{ printf "/%s/" .Params.category_key }}">Back to category</a> | <a href="/">Back to collection index</a></p>
+  <footer class="titlebar">
+    <a href="{{ printf "/%s/" .Params.category_key }}">Back to category</a>
+    <a href="/">Back to collection index</a>
+  </footer>
 {{ end }}

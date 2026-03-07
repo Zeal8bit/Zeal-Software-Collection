@@ -174,11 +174,19 @@
     }
 
     function focusModalTarget() {
+      var firstVideo = activeModal
+        ? activeModal.querySelector(".bbs-modal__screenshots-list video[tabindex]")
+        : null;
       var links = activeModal
         ? Array.prototype.slice.call(activeModal.querySelectorAll("a[href]"))
         : [];
       var closeButton = activeModal ? activeModal.querySelector("[data-close-modal]") : null;
       var dialog = activeModal ? activeModal.querySelector(".bbs-modal__dialog") : null;
+
+      if (firstVideo) {
+        firstVideo.focus();
+        return;
+      }
 
       if (links.length > 0) {
         links[0].focus();
@@ -193,6 +201,21 @@
       if (dialog) {
         dialog.focus();
       }
+    }
+
+    function resetModalMediaState(modal) {
+      var dialog = modal ? modal.querySelector(".bbs-modal__dialog") : null;
+      var toggles = modal ? Array.prototype.slice.call(modal.querySelectorAll("[data-media-toggle]")) : [];
+
+      if (dialog) {
+        dialog.classList.remove("is-media-expanded");
+      }
+
+      toggles.forEach(function (toggle) {
+        toggle.setAttribute("aria-pressed", "false");
+        toggle.setAttribute("aria-label", "Show all media");
+        toggle.textContent = "[+]";
+      });
     }
 
     function closeModal(restoreFocus) {
@@ -221,6 +244,7 @@
 
       lastTrigger = button;
       activeModal = modal;
+      resetModalMediaState(activeModal);
       if (!activeModal.open) {
         activeModal.showModal();
       }
@@ -274,6 +298,7 @@
           return;
         }
 
+        resetModalMediaState(record);
         activeModal = null;
         document.body.classList.remove("modal-open");
 
@@ -291,6 +316,25 @@
       });
 
       record.addEventListener("click", function (event) {
+        var mediaToggle = event.target.closest("[data-media-toggle]");
+        var dialog;
+        var expanded;
+
+        if (mediaToggle) {
+          event.preventDefault();
+          dialog = record.querySelector(".bbs-modal__dialog");
+
+          if (!dialog) {
+            return;
+          }
+
+          expanded = dialog.classList.toggle("is-media-expanded");
+          mediaToggle.setAttribute("aria-pressed", expanded ? "true" : "false");
+          mediaToggle.setAttribute("aria-label", expanded ? "Show less media" : "Show all media");
+          mediaToggle.textContent = expanded ? "[-]" : "[+]";
+          return;
+        }
+
         if (event.target === record) {
           closeModal(true);
         }
@@ -336,13 +380,99 @@
     openProjectFromQueryParam();
   }
 
+  function initHoverVideos() {
+    var videos = Array.prototype.slice.call(document.querySelectorAll(".bbs-modal__screenshot video"));
+
+    if (videos.length === 0) {
+      return;
+    }
+
+    videos.forEach(function (video) {
+      var tile = video.closest(".bbs-modal__screenshot--video");
+      var wantsPlay = false;
+      var READY_TO_PLAY = 3;
+
+      function setLoading(isLoading) {
+        if (!tile) {
+          return;
+        }
+
+        tile.classList.toggle("is-loading", Boolean(isLoading));
+      }
+
+      function requestPlay() {
+        var playResult = video.play();
+        if (video.readyState < READY_TO_PLAY) {
+          setLoading(true);
+        }
+
+        if (playResult && typeof playResult.catch === "function") {
+          playResult.catch(function () {
+            setLoading(true);
+          });
+        }
+      }
+
+      function play() {
+        wantsPlay = true;
+        requestPlay();
+      }
+
+      function pause() {
+        wantsPlay = false;
+        video.pause();
+        video.currentTime = 0;
+        setLoading(video.readyState < READY_TO_PLAY);
+      }
+
+      video.addEventListener("mouseenter", play);
+      video.addEventListener("mouseleave", pause);
+      video.addEventListener("focus", play);
+      video.addEventListener("blur", pause);
+      video.addEventListener("loadstart", function () {
+        setLoading(true);
+      });
+      video.addEventListener("waiting", function () {
+        if (wantsPlay) {
+          setLoading(true);
+        }
+      });
+      video.addEventListener("stalled", function () {
+        if (wantsPlay) {
+          setLoading(true);
+        }
+      });
+      video.addEventListener("canplay", function () {
+        if (wantsPlay) {
+          requestPlay();
+        }
+      });
+      video.addEventListener("canplaythrough", function () {
+        setLoading(false);
+      });
+      video.addEventListener("playing", function () {
+        setLoading(false);
+      });
+      video.addEventListener("pause", function () {
+        if (wantsPlay) {
+          setLoading(true);
+        }
+      });
+      video.addEventListener("error", function () {
+        setLoading(false);
+      });
+    });
+  }
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
       initCollectionFilters();
       initEntryModal();
+      initHoverVideos();
     });
   } else {
     initCollectionFilters();
     initEntryModal();
+    initHoverVideos();
   }
 })();

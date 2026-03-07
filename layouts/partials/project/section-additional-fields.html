@@ -9,7 +9,7 @@
 {{- end -}}
 {{- $metadataAdditional := dict -}}
 {{- range $key, $value := $metadata -}}
-  {{- if and (ne $key "name") (ne $key "description") (ne $key "category") (ne $key "author") (ne $key "flags") (ne $key "screenshot") (ne $key "screenshots") -}}
+  {{- if and (ne $key "name") (ne $key "description") (ne $key "category") (ne $key "author") (ne $key "flags") (ne $key "screenshot") (ne $key "screenshots") (ne $key "video") (ne $key "videos") -}}
     {{- $metadataAdditional = merge $metadataAdditional (dict $key $value) -}}
   {{- end -}}
 {{- end -}}
@@ -28,7 +28,10 @@
 {{ with $additionalFields }}
   <section>
     <h2>Additional Fields</h2>
-    {{- $extraYaml := (jsonify .) | transform.Remarshal "yaml" -}}
-    <pre class="bbs-modal__content">{{ $extraYaml }}</pre>
+    <ul class="collection collection--details additional-fields__list">
+      {{- range $key, $value := . -}}
+        {{- partial "project/additional-field-node.html" (dict "label" $key "value" $value) -}}
+      {{- end -}}
+    </ul>
   </section>
 {{ end }}

@@ -13,6 +13,7 @@
   {{- end -}}
 {{- end -}}
 {{- $screenshots := slice -}}
+{{- $videos := slice -}}
 {{- with (index $metadata "screenshot") -}}
   {{- if reflect.IsSlice . -}}
     {{- $screenshots = . -}}
@@ -29,7 +30,23 @@
     {{- $screenshots = $screenshots | append . -}}
   {{- end -}}
 {{- end -}}
+{{- with (index $metadata "video") -}}
+  {{- if reflect.IsSlice . -}}
+    {{- $videos = . -}}
+  {{- else -}}
+    {{- $videos = $videos | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- with (index $metadata "videos") -}}
+  {{- if reflect.IsSlice . -}}
+    {{- range . -}}
+      {{- $videos = $videos | append . -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $videos = $videos | append . -}}
+  {{- end -}}
+{{- end -}}
 
-{{- partial "project/section-screenshots.html" (dict "title" $page.Title "screenshots" $screenshots) -}}
+{{- partial "project/section-screenshots.html" (dict "title" $page.Title "screenshots" $screenshots "videos" $videos "mode" $mode) -}}
 {{- partial "project/section-details.html" (dict "project" $project "author" $author "dependencyLinks" $dependencyLinks "mode" $mode) -}}
 {{- partial "project/section-additional-fields.html" (dict "project" $project "metadata" $metadata "author" $author) -}}

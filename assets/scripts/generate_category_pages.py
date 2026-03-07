@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import sys
 import json
+import argparse
 import subprocess
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -78,7 +79,22 @@ def _ruby_yaml_dump(data: dict) -> str:
     return result.stdout
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Generate Hugo category/project pages from collection.yml"
+    )
+    parser.add_argument(
+        "project_id",
+        nargs="?",
+        help="Optional project id to update only a single project entry.",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = parse_args()
+    target_project_id = args.project_id
+
     if not COLLECTION_PATH.exists():
         print(f"collection.yml not found at {COLLECTION_PATH}", file=sys.stderr)
         return 1
@@ -89,6 +105,19 @@ def main() -> int:
         data = _ruby_yaml_load(COLLECTION_PATH)
     entries = data.get("dependencies", []) or []
     entry_lastmod = load_entry_lastmod_by_id(COLLECTION_PATH, [entry.get("id") for entry in entries])
+    target_entry_ids: set[str] | None = None
+
+    if target_project_id:
+        matched = [
+            entry_id
+            for entry in entries
+            for entry_id in [entry.get("id")]
+            if isinstance(entry_id, str) and entry_id == target_project_id
+        ]
+        if not matched:
+            print(f"project id not found: {target_project_id}", file=sys.stderr)
+            return 1
+        target_entry_ids = set(matched)
 
     entries_by_category: dict[str, list[dict]] = defaultdict(list)
     for entry in entries:
@@ -100,14 +129,23 @@ def main() -> int:
     CONTENT_ROOT.mkdir(parents=True, exist_ok=True)
 
     for category in sorted(entries_by_category.keys()):
+        category_entries = entries_by_category[category]
+        category_entry_ids = [
+            entry_id
+            for entry in category_entries
+            for entry_id in [entry.get("id")]
+            if isinstance(entry_id, str)
+        ]
+        if target_entry_ids and not any(entry_id in target_entry_ids for entry_id in category_entry_ids):
+            continue
+
         category_dir = CONTENT_ROOT / category
         category_dir.mkdir(parents=True, exist_ok=True)
         category_name = titleize_category(category)
-        category_entry_ids = [entry.get("id") for entry in entries_by_category[category]]
         category_lastmods = [
             entry_lastmod[entry_id]
             for entry_id in category_entry_ids
-            if isinstance(entry_id, str) and entry_id in entry_lastmod
+            if entry_id in entry_lastmod
         ]
         category_front_matter = {
             "title": f"{category_name} Category",
@@ -126,7 +164,7 @@ def main() -> int:
 
         slugs_seen: dict[str, int] = defaultdict(int)
 
-        for entry in entries_by_category[category]:
+        for entry in category_entries:
             metadata = entry.get("metadata", {}) or {}
             entry_id = entry.get("id")
             name = metadata.get("name") or entry.get("id") or "Project"
@@ -137,6 +175,8 @@ def main() -> int:
                 if slugs_seen[base_slug] > 1
                 else base_slug
             )
+            if target_entry_ids and entry_id not in target_entry_ids:
+                continue
 
             front_matter = {
                 "title": name,
@@ -156,7 +196,10 @@ def main() -> int:
 
             write_front_matter(category_dir / f"{slug}.md", front_matter, body)
 
-    print(f"Generated category pages under {CONTENT_ROOT}")
+    if target_project_id:
+        print(f"Updated project {target_project_id} under {CONTENT_ROOT}")
+    else:
+        print(f"Generated category pages under {CONTENT_ROOT}")
     return 0
 
 

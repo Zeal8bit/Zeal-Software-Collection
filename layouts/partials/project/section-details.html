@@ -4,7 +4,7 @@
 {{- $mode := default "page" .mode -}}
 <section>
   <h2>Details</h2>
-  <ul class="collection">
+  <ul class="collection collection--details">
     {{ with $project.id }}<li><strong>ID:</strong> {{ . }}</li>{{ end }}
     {{ with $project.repo }}<li><strong>Repository:</strong> <a href="{{ . }}">{{ . }}</a></li>{{ end }}
     {{ with $author.name }}

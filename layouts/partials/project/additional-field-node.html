@@ -1,0 +1,32 @@
+{{- $label := .label -}}
+{{- $value := .value -}}
+{{- $isArrayItem := default false .isArrayItem -}}
+<li class="additional-fields__item">
+  {{- if $isArrayItem -}}
+    <span class="additional-fields__dash">-</span>
+  {{- end -}}
+  {{- with $label -}}
+    <strong>{{ . }}:</strong>
+  {{- end -}}
+
+  {{- if reflect.IsMap $value -}}
+    <ul class="additional-fields__list">
+      {{- range $key, $nested := $value -}}
+        {{- partial "project/additional-field-node.html" (dict "label" $key "value" $nested) -}}
+      {{- end -}}
+    </ul>
+  {{- else if reflect.IsSlice $value -}}
+    <ul class="additional-fields__list">
+      {{- range $nested := $value -}}
+        {{- partial "project/additional-field-node.html" (dict "value" $nested "isArrayItem" true) -}}
+      {{- end -}}
+    </ul>
+  {{- else -}}
+    {{- $text := printf "%v" $value -}}
+    {{- if or (hasPrefix $text "https://") (hasPrefix $text "http://") -}}
+      <a href="{{ $text }}" target="_blank" rel="noreferrer noopener">{{ $text }}</a>
+    {{- else -}}
+      <span>{{ $text }}</span>
+    {{- end -}}
+  {{- end -}}
+</li>
