@@ -1,0 +1,28 @@
+{{- $categories := .categories -}}
+<section class="filter-panel" aria-label="Collection filters">
+  <div class="filter-panel__row">
+    <label class="filter-panel__field">
+      <span class="filter-panel__label">CATEGORY</span>
+      <select id="collection-category" class="terminal-control">
+        <option value="">ALL</option>
+        {{- range $category := $categories }}
+          {{- $label := partial "util/category-label.html" $category -}}
+          <option value="{{ $category }}">{{ $label }}</option>
+        {{- end }}
+      </select>
+    </label>
+
+    <label class="filter-panel__field filter-panel__field--wide">
+      <span class="filter-panel__label">SEARCH</span>
+      <input
+        id="collection-search"
+        class="terminal-control"
+        type="search"
+        placeholder="TYPE PROGRAM NAME"
+        autocomplete="off"
+        spellcheck="false"
+      >
+    </label>
+  </div>
+  <p id="collection-status" class="filter-panel__status" aria-live="polite">READY. SHOWING ALL ENTRIES.</p>
+</section>

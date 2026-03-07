@@ -1,0 +1,21 @@
+{{- $font := resources.Get "fonts/BigBlueTermPlusNerdFontMono-Regular.ttf" | resources.Copy "fonts/BigBlueTermPlusNerdFontMono-Regular.ttf" -}}
+{{- $fontLicense := resources.Get "fonts/BigBlueTerminal-LICENSE.txt" | resources.Copy "fonts/BigBlueTerminal-LICENSE.txt" -}}
+{{- $script := resources.Get "js/index.js" | js.Build (dict "targetPath" "assets/js/index.min.js" "minify" true) -}}
+{{- $styleSource := resources.Get "scss/index.scss" | resources.ExecuteAsTemplate "scss/index.scss" (dict "fontURL" $font.RelPermalink "fontLicenseURL" $fontLicense.RelPermalink) -}}
+{{- $style := $styleSource | css.Sass (dict "targetPath" "assets/css/index.min.css" "outputStyle" "compressed") -}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ block "title" . }}Software Collection - Zeal 8-bit Computer{{ end }}</title>
+    <link rel="icon" href="https://zeal8bit.com/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="{{ $style.RelPermalink }}">
+    {{- block "extra_head" . }}{{- end }}
+  </head>
+  <body>
+    {{- block "main" . }}{{- end }}
+    <script src="{{ $script.RelPermalink }}"></script>
+    {{- block "extra_body_end" . }}{{- end }}
+  </body>
+</html>

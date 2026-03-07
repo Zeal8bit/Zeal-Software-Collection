@@ -1,0 +1,22 @@
+{{ define "title" }}{{ .Title }} - Software Collect - Zeal 8-bit Computer{{ end }}
+
+{{ define "main" }}
+<main class="screen">
+  <div class="titlebar">
+    <span>ZEAL BBS // NODE 01</span>
+    <span>CATEGORY.DIR</span>
+  </div>
+
+  <h1>{{ .Title }}</h1>
+  {{ with .Params.description }}<p class="intro">{{ . }}</p>{{ end }}
+
+  <h2><span class="sprite-icon" aria-hidden="true">📦</span> Projects</h2>
+  <ul class="collection">
+    {{ range .RegularPages.ByTitle }}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ with .Params.description }}: {{ . }}{{ end }}</li>
+    {{ end }}
+  </ul>
+
+  <p><a href="/">Back to collection index</a></p>
+</main>
+{{ end }}

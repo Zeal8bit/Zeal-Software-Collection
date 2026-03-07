@@ -1,0 +1,47 @@
+{{- $categories := .categories -}}
+{{- $dependencies := .dependencies -}}
+{{- range $category := $categories }}
+  {{- $label := partial "util/category-label.html" $category -}}
+  {{- $emoji := partial "util/category-emoji.html" $category -}}
+  {{- $entries := partial "util/dependencies-for-category.html" (dict "dependencies" $dependencies "category" $category) -}}
+  <section data-category="{{ $category }}">
+    <h2><span class="sprite-icon" aria-hidden="true">{{ $emoji }}</span> {{ $label }} BOARD</h2>
+    <ul class="collection">
+      {{- range $entry := $entries }}
+        {{- $dependency := partial "util/dependency-context.html" $entry -}}
+        {{- $metadata := $dependency.metadata -}}
+        {{- $entryID := default $entry.repo $entry.id -}}
+        {{- $detailSlugSource := default $metadata.name $entry.id -}}
+        {{- $detailSlug := replaceRE "^-+|-+$" "" (replaceRE "[^a-z0-9]+" "-" (lower $detailSlugSource)) -}}
+          <li
+            data-name="{{ lower $metadata.name }}"
+            {{ if $dependency.isDeprecated }}class="deprecated"{{ end }}
+          >
+            {{- if $dependency.isDeprecated }}<del>{{ end -}}
+            <a href="{{ $entry.repo }}">{{ $metadata.name }}</a>
+            by
+            {{- with $dependency.authorLink }}
+              <a href="{{ . }}">@{{ $dependency.authorName }}</a>
+            {{- else }}
+              @{{ $dependency.authorName }}
+            {{- end }}
+            {{- if $dependency.isWorkInProgress }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
+            {{- if $dependency.hasHardwareExtension }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
+            : {{ $metadata.description }}
+            <button
+              class="view-button"
+              type="button"
+              data-entry-name="{{ $metadata.name }}"
+              data-entry-id="{{ $entryID }}"
+              aria-haspopup="dialog"
+            >
+              VIEW
+            </button>
+            <a class="view-button" href="{{ printf "/%s/%s/" $category $detailSlug }}">PAGE</a>
+            {{- if $dependency.isDeprecated }}</del> <strong>DEPRECATED</strong>{{ end -}}
+            {{- partial "project/project-record-content.html" (dict "entry" $entry "metadata" $metadata "entryID" $entryID) -}}
+          </li>
+      {{- end }}
+    </ul>
+  </section>
+{{- end }}

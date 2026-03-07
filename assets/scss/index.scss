@@ -329,28 +329,24 @@ ul.collection {
 }
 
 .bbs-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: grid;
-  place-items: center;
-  padding: 18px;
+  width: calc(100% - 36px);
+  max-width: 900px;
+  max-height: 78vh;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
 }
 
-.bbs-modal[hidden] {
-  display: none;
-}
-
-.bbs-modal__backdrop {
-  position: absolute;
-  inset: 0;
+.bbs-modal::backdrop {
   background: rgba(0, 0, 0, 0.72);
 }
 
 .bbs-modal__dialog {
   position: relative;
   width: 100%;
-  max-width: 900px;
   max-height: 78vh;
   border: 2px solid var(--theme-panel-border);
   background:
@@ -402,10 +398,52 @@ ul.collection {
   background: var(--theme-status-fill);
 }
 
+.bbs-modal__screenshots {
+  padding: 14px;
+  border-bottom: 1px solid var(--theme-status-border);
+}
+
+.bbs-modal__screenshots-title {
+  margin: 0 0 10px;
+  color: var(--theme-vga-cyan);
+}
+
+.bbs-modal__screenshots-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.bbs-modal__screenshot {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  max-height: 220px;
+  aspect-ratio: 4 / 3;
+  justify-self: start;
+  border: 1px solid var(--theme-panel-border);
+  background: rgba(0, 0, 0, 0.36);
+  overflow: hidden;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--theme-vga-yellow);
+    box-shadow: 0 0 0 1px var(--theme-vga-yellow);
+    outline: none;
+  }
+}
+
 .bbs-modal__content {
   margin: 0;
   padding: 14px;
-  max-height: calc(78vh - 96px);
+  max-height: calc(78vh - 230px);
   overflow: auto;
   color: var(--theme-vga-green);
   background: rgba(0, 0, 0, 0.18);

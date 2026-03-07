@@ -1,0 +1,21 @@
+{{- $modalClass := default "bbs-modal" .modalClass -}}
+{{- $dialogClass := default "bbs-modal__dialog" .dialogClass -}}
+{{- $title := default "PROJECT RECORD" .title -}}
+{{- $subtitle := default "" .subtitle -}}
+{{- $entryID := default "" .entryID -}}
+<dialog class="{{ $modalClass }}"{{ with $entryID }} data-entry-id="{{ . }}"{{ end }}>
+  <section
+    class="{{ $dialogClass }}"
+    aria-label="{{ $title }}"
+    tabindex="-1"
+  >
+    <div class="bbs-modal__titlebar">
+      <span>{{ $title }}</span>
+      <button class="bbs-modal__close" type="button" data-close-modal aria-label="Close dialog">[X]</button>
+    </div>
+    {{- with $subtitle }}
+      <p class="bbs-modal__status">{{ . }}</p>
+    {{- end }}
+    {{- .body -}}
+  </section>
+</dialog>

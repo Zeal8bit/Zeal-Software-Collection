@@ -1,4 +1,6 @@
 release/
 _site/
+content/
 .hugo_build.lock
 resources/_gen
+hugo.dev.toml

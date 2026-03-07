@@ -1,0 +1,16 @@
+{{- $metadata := .metadata -}}
+{{- $yaml := .yaml -}}
+{{- $screenshots := .screenshots -}}
+{{- if gt (len $screenshots) 0 }}
+  <div class="bbs-modal__screenshots">
+    <p class="bbs-modal__screenshots-title">SCREENSHOTS</p>
+    <div class="bbs-modal__screenshots-list">
+      {{- range $index, $url := $screenshots }}
+        <a class="bbs-modal__screenshot" href="{{ $url }}" target="_blank" rel="noreferrer noopener">
+          <img src="{{ $url }}" alt="{{ $metadata.name }} screenshot {{ add $index 1 }}" loading="lazy">
+        </a>
+      {{- end }}
+    </div>
+  </div>
+{{- end }}
+<pre class="bbs-modal__content">{{ $yaml }}</pre>

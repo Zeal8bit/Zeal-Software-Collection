@@ -6,16 +6,16 @@ Projects marked with:
 
 * 🪛 involve a hardware extension.
 * ⚠️ involve a *Work In Progress* state, may not be usable yet.
-{{- $categories := partial "categories.html" . -}}
+{{- $categories := partial "util/categories.html" . -}}
 {{- range $category := $categories }}
-  {{- $emoji := partial "category-emoji.html" $category }}
-  {{- $label := partial "category-label.html" $category }}
-  {{- $entries := partial "dependencies-for-category.html" (dict "dependencies" $.Site.Data.collection.dependencies "category" $category) }}
+  {{- $emoji := partial "util/category-emoji.html" $category }}
+  {{- $label := partial "util/category-label.html" $category }}
+  {{- $entries := partial "util/dependencies-for-category.html" (dict "dependencies" $.Site.Data.collection.dependencies "category" $category) }}
 
 ## {{ $emoji }} {{ $label }}
 
   {{- range $entry := $entries }}
-    {{- $dependency := partial "dependency-context.html" $entry }}
+    {{- $dependency := partial "util/dependency-context.html" $entry }}
     {{- $metadata := $dependency.metadata }}
     {{- $author := print "@" $dependency.authorName }}
     {{- with $dependency.authorLink }}

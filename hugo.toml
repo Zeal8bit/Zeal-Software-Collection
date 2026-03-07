@@ -1,7 +1,9 @@
-baseURL = "/"
+baseURL = "https://sc.zeal8bit.com/"
 publishDir = "_site"
 disablePathToLower = true
-disableKinds = ["rss", "section", "taxonomy", "term", "sitemap", "robotsTXT"]
+disableKinds = ["taxonomy", "term", "robotsTXT"]
+
+[taxonomies]
 
 [mediaTypes."text/markdown"]
 suffixes = ["md"]
@@ -12,8 +14,11 @@ baseName = "README"
 isPlainText = true
 notAlternative = true
 
+[outputFormats.RSS]
+baseName = "rss"
+
 [outputs]
-home = ["HTML", "README"]
+home = ["HTML", "README", "RSS"]
 
 [module]
 [[module.mounts]]
@@ -23,6 +28,14 @@ target = "layouts"
 [[module.mounts]]
 source = "assets"
 target = "assets"
+
+[[module.mounts]]
+source = "content"
+target = "content"
+
+[[module.mounts]]
+source = "static"
+target = "static"
 
 [[module.mounts]]
 source = "images"

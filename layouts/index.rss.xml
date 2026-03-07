@@ -1,0 +1,25 @@
+{{- $siteTitle := .Site.Title | default "Software Collect - Zeal 8-bit Computer" -}}
+{{- $siteLink := "/" | absURL -}}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ $siteTitle }}</title>
+    <link>{{ $siteLink }}</link>
+    <description>Recent software entries for Zeal 8-bit Computer.</description>
+    <generator>Hugo</generator>
+    <language>{{ .Site.LanguageCode | default "en" }}</language>
+    <atom:link href="{{ "/rss.xml" | absURL }}" rel="self" type="application/rss+xml" />
+    {{- range .Site.RegularPages.ByLastmod.Reverse }}
+      {{- $itemLink := .RelPermalink -}}
+      {{- with .Params.project_id -}}
+        {{- $itemLink = printf "/?project=%s" (urlquery .) -}}
+      {{- end }}
+      <item>
+        <title>{{ .Title }}</title>
+        <link>{{ $itemLink | absURL }}</link>
+        <pubDate>{{ .Lastmod.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</pubDate>
+        <guid>{{ $itemLink | absURL }}</guid>
+        <description>{{ .Plain }}</description>
+      </item>
+    {{- end }}
+  </channel>
+</rss>

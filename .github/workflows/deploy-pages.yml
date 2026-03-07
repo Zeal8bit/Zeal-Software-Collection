@@ -19,12 +19,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: '0.157.0'
           extended: true
+
+      - name: Generate category content
+        run: assets/scripts/generate_category_pages.py
 
       - name: Build site
         run: hugo

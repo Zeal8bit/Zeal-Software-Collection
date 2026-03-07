@@ -1,0 +1,25 @@
+{{- $entry := .entry -}}
+{{- $metadata := .metadata -}}
+{{- $entryID := .entryID -}}
+{{- $yaml := $entry | transform.Remarshal "yaml" -}}
+{{- $screenshots := slice -}}
+{{- with $metadata.screenshot -}}
+  {{- $screenshots = $screenshots | append . -}}
+{{- end -}}
+{{- with $metadata.screenshots -}}
+  {{- if reflect.IsSlice . -}}
+    {{- range . -}}
+      {{- $screenshots = $screenshots | append . -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $screenshots = $screenshots | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- $body := partial "project/project-record-body.html" (dict "metadata" $metadata "yaml" $yaml "screenshots" $screenshots) -}}
+{{- partial "project/modal-window.html" (dict
+  "modalClass" "bbs-modal bbs-modal__record"
+  "title" (print (upper $metadata.name) " :: PROJECT RECORD")
+  "subtitle" "BUFFER READY :: LEFT/RIGHT TO NAVIGATE :: PRESS ESC TO EXIT"
+  "entryID" $entryID
+  "body" $body
+) -}}

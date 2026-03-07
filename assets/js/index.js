@@ -68,124 +68,113 @@
   }
 
   function initEntryModal() {
-    var modal = document.getElementById("entry-modal");
-    var content = document.getElementById("entry-modal-content");
-    var title = document.getElementById("entry-modal-title");
-    var dialog = modal ? modal.querySelector(".bbs-modal__dialog") : null;
     var viewButtons = Array.prototype.slice.call(document.querySelectorAll(".view-button"));
-    var closeButtons = Array.prototype.slice.call(document.querySelectorAll("[data-close-modal]"));
+    var records = Array.prototype.slice.call(
+      document.querySelectorAll("dialog.bbs-modal.bbs-modal__record[data-entry-id]")
+    );
     var lastTrigger = null;
+    var activeModal = null;
+    var restoreFocusOnClose = false;
 
-    if (!modal || !content || !title || !dialog || viewButtons.length === 0) {
+    if (viewButtons.length === 0 || records.length === 0) {
       return;
     }
 
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+    if (typeof records[0].showModal !== "function") {
+      return;
     }
 
-    function normalizeYamlIndentation(text) {
-      var lines = text.split("\n");
-      var activeListIndent = null;
-      var activeParentIndent = null;
-
-      lines.forEach(function (line, index) {
-        var keyMatch = line.match(/^(\s*)([^:\n]+):\s*$/);
-        var lineIndent = (line.match(/^\s*/) || [""])[0].length;
-
-        if (keyMatch) {
-          activeParentIndent = keyMatch[1].length;
-          activeListIndent = null;
-          return;
-        }
-
-        if (/^\s*$/.test(line)) {
-          return;
-        }
-
-        if (/^-\s+/.test(line) && activeParentIndent !== null) {
-          activeListIndent = activeParentIndent + 2;
-          lines[index] = new Array(activeListIndent + 1).join(" ") + line;
-          return;
-        }
-
-        if (/^-\s+/.test(line) && activeListIndent !== null) {
-          lines[index] = new Array(activeListIndent + 1).join(" ") + line;
-          return;
-        }
-
-        if (lineIndent <= (activeParentIndent === null ? 0 : activeParentIndent)) {
-          activeParentIndent = null;
-          activeListIndent = null;
-        }
-      });
-
-      return lines.join("\n");
+    function findRecord(entryId) {
+      return (
+        records.filter(function (record) {
+          return record.getAttribute("data-entry-id") === entryId;
+        })[0] || null
+      );
     }
 
-    function linkifyYaml(text) {
-      var escaped = escapeHtml(text);
-
-      return escaped.replace(/https?:\/\/[^\s]+/g, function (url) {
-        return '<a href="' + url + '" target="_blank" rel="noreferrer noopener">' + url + "</a>";
-      });
+    function isModalOpen(modal) {
+      return Boolean(modal && modal.open);
     }
 
-    function getFocusableNodes() {
-      return Array.prototype.slice
-        .call(
-          dialog.querySelectorAll(
-            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          )
-        )
-        .filter(function (node) {
-          return !node.hidden;
-        });
+    function isVisibleProjectButton(button) {
+      var item = button.closest("li[data-name]");
+      var section = button.closest("section[data-category]");
+
+      if (!item || !section) {
+        return false;
+      }
+
+      return !button.hidden && !item.hidden && !section.hidden;
+    }
+
+    function getNavigableButtons() {
+      return viewButtons.filter(isVisibleProjectButton);
+    }
+
+    function openAdjacentEntry(direction) {
+      var buttons = getNavigableButtons();
+      var activeIndex = buttons.indexOf(lastTrigger);
+      var nextIndex;
+
+      if (buttons.length === 0 || activeIndex === -1) {
+        return;
+      }
+
+      nextIndex = (activeIndex + direction + buttons.length) % buttons.length;
+
+      openModal(buttons[nextIndex]);
     }
 
     function focusModalTarget() {
-      var yamlLinks = Array.prototype.slice.call(content.querySelectorAll("a[href]"));
+      var links = activeModal
+        ? Array.prototype.slice.call(activeModal.querySelectorAll("a[href]"))
+        : [];
+      var closeButton = activeModal ? activeModal.querySelector("[data-close-modal]") : null;
+      var dialog = activeModal ? activeModal.querySelector(".bbs-modal__dialog") : null;
 
-      if (yamlLinks.length > 0) {
-        yamlLinks[0].focus();
+      if (links.length > 0) {
+        links[0].focus();
         return;
       }
 
-      if (closeButtons.length > 0) {
-        closeButtons[0].focus();
+      if (closeButton) {
+        closeButton.focus();
         return;
       }
 
-      dialog.focus();
+      if (dialog) {
+        dialog.focus();
+      }
     }
 
-    function closeModal() {
-      modal.hidden = true;
-      document.body.classList.remove("modal-open");
+    function closeModal(restoreFocus) {
+      if (!activeModal) {
+        return;
+      }
 
-      if (lastTrigger) {
-        lastTrigger.focus();
+      restoreFocusOnClose = restoreFocus;
+      if (activeModal.open) {
+        activeModal.close();
       }
     }
 
     function openModal(button) {
-      var entry = button.closest("li");
-      var yamlNode = entry ? entry.querySelector(".entry-yaml") : null;
-      var entryName = button.getAttribute("data-entry-name") || "PROJECT RECORD";
+      var entryId = button.getAttribute("data-entry-id");
+      var modal = entryId ? findRecord(entryId) : null;
 
-      if (!yamlNode) {
+      if (!modal) {
         return;
       }
 
+      if (activeModal && activeModal !== modal) {
+        closeModal(false);
+      }
+
       lastTrigger = button;
-      title.textContent = entryName.toUpperCase() + " :: PROJECT RECORD";
-      content.innerHTML = linkifyYaml(normalizeYamlIndentation(yamlNode.textContent.trim()));
-      modal.hidden = false;
+      activeModal = modal;
+      if (!activeModal.open) {
+        activeModal.showModal();
+      }
       document.body.classList.add("modal-open");
       focusModalTarget();
     }
@@ -196,38 +185,47 @@
       });
     });
 
-    closeButtons.forEach(function (button) {
-      button.addEventListener("click", closeModal);
+    records.forEach(function (record) {
+      record.addEventListener("cancel", function () {
+        restoreFocusOnClose = true;
+      });
+
+      record.addEventListener("close", function () {
+        if (activeModal !== record) {
+          return;
+        }
+
+        activeModal = null;
+        document.body.classList.remove("modal-open");
+
+        if (restoreFocusOnClose && lastTrigger) {
+          lastTrigger.focus();
+        }
+
+        restoreFocusOnClose = false;
+      });
+
+      Array.prototype.slice.call(record.querySelectorAll("[data-close-modal]")).forEach(function (button) {
+        button.addEventListener("click", function () {
+          closeModal(true);
+        });
+      });
+
+      record.addEventListener("click", function (event) {
+        if (event.target === record) {
+          closeModal(true);
+        }
+      });
     });
 
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Tab" && !modal.hidden) {
-        var focusable = getFocusableNodes();
-
-        if (focusable.length === 0) {
-          event.preventDefault();
-          dialog.focus();
+      if ((event.key === "ArrowRight" || event.key === "ArrowLeft") && isModalOpen(activeModal)) {
+        if (event.altKey || event.ctrlKey || event.metaKey) {
           return;
         }
 
-        var first = focusable[0];
-        var last = focusable[focusable.length - 1];
-
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-          return;
-        }
-
-        if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-          return;
-        }
-      }
-
-      if (event.key === "Escape" && !modal.hidden) {
-        closeModal();
+        event.preventDefault();
+        openAdjacentEntry(event.key === "ArrowRight" ? 1 : -1);
       }
     });
   }
