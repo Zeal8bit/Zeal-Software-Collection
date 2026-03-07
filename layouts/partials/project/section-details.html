@@ -1,5 +1,7 @@
 {{- $project := default (dict) .project -}}
 {{- $author := default (dict) .author -}}
+{{- $dependencyLinks := default (dict) .dependencyLinks -}}
+{{- $mode := default "page" .mode -}}
 <section>
   <h2>Details</h2>
   <ul class="collection">
@@ -14,7 +16,22 @@
       {{ if gt (len .) 0 }}<li><strong>Aliases:</strong> {{ delimit . ", " }}</li>{{ end }}
     {{ end }}
     {{ with $project.depends_on }}
-      {{ if gt (len .) 0 }}<li><strong>Depends On:</strong> {{ delimit . ", " }}</li>{{ end }}
+      {{ if gt (len .) 0 }}
+        <li><strong>Depends On:</strong>
+          {{- range $index, $depID := . -}}
+            {{- if gt $index 0 }}, {{ end -}}
+            {{- with (index $dependencyLinks $depID) -}}
+              {{- if eq $mode "modal" -}}
+                <a href="{{ . }}" data-open-modal-entry data-entry-id="{{ $depID }}">{{ $depID }}</a>
+              {{- else -}}
+                <a href="{{ . }}">{{ $depID }}</a>
+              {{- end -}}
+            {{- else -}}
+              {{ $depID }}
+            {{- end -}}
+          {{- end -}}
+        </li>
+      {{ end }}
     {{ end }}
   </ul>
 </section>

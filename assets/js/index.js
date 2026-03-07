@@ -110,6 +110,36 @@
       );
     }
 
+    function findButton(entryId) {
+      return (
+        viewButtons.filter(function (button) {
+          return button.getAttribute("data-entry-id") === entryId;
+        })[0] || null
+      );
+    }
+
+    function getProjectParam() {
+      var params = new URLSearchParams(window.location.search || "");
+      return params.get("project");
+    }
+
+    function updateProjectHistory(entryId) {
+      var url = new URL(window.location.href);
+      var currentProject = url.searchParams.get("project");
+
+      if (currentProject === entryId) {
+        return;
+      }
+
+      if (entryId) {
+        url.searchParams.set("project", entryId);
+      } else {
+        url.searchParams.delete("project");
+      }
+
+      window.history.pushState({}, "", url.pathname + url.search + url.hash);
+    }
+
     function isModalOpen(modal) {
       return Boolean(modal && modal.open);
     }
@@ -140,7 +170,7 @@
 
       nextIndex = (activeIndex + direction + buttons.length) % buttons.length;
 
-      openModal(buttons[nextIndex]);
+      openModal(buttons[nextIndex], { updateHistory: false });
     }
 
     function focusModalTarget() {
@@ -176,7 +206,8 @@
       }
     }
 
-    function openModal(button) {
+    function openModal(button, options) {
+      var config = options || {};
       var entryId = button.getAttribute("data-entry-id");
       var modal = entryId ? findRecord(entryId) : null;
 
@@ -193,8 +224,19 @@
       if (!activeModal.open) {
         activeModal.showModal();
       }
+      if (config.updateHistory !== false) {
+        updateProjectHistory(entryId);
+      }
       document.body.classList.add("modal-open");
       focusModalTarget();
+    }
+
+    function openModalByEntryId(entryId) {
+      var match = findButton(entryId);
+
+      if (match) {
+        openModal(match);
+      }
     }
 
     function openProjectFromQueryParam() {
@@ -212,7 +254,7 @@
       })[0];
 
       if (match) {
-        openModal(match);
+        openModal(match, { updateHistory: false });
       }
     }
 
@@ -253,6 +295,31 @@
           closeModal(true);
         }
       });
+    });
+
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest("[data-open-modal-entry][data-entry-id]");
+
+      if (!link || !isModalOpen(activeModal)) {
+        return;
+      }
+
+      event.preventDefault();
+      openModalByEntryId(link.getAttribute("data-entry-id"));
+    });
+
+    window.addEventListener("popstate", function () {
+      var projectId = getProjectParam();
+      var match = projectId ? findButton(projectId) : null;
+
+      if (match) {
+        openModal(match, { updateHistory: false });
+        return;
+      }
+
+      if (isModalOpen(activeModal)) {
+        closeModal(false);
+      }
     });
 
     document.addEventListener("keydown", function (event) {

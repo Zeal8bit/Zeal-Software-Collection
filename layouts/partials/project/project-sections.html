@@ -1,7 +1,17 @@
 {{- $page := .page -}}
+{{- $mode := default "page" .mode -}}
 {{- $project := default (dict) (index $page.Params "project") -}}
 {{- $metadata := default (dict) (index $project "metadata") -}}
 {{- $author := default (dict) (index $metadata "author") -}}
+{{- $dependencyLinks := dict -}}
+{{- $projectPages := where $page.Site.RegularPages "Params.layout" "project-detail" -}}
+{{- range $candidate := $projectPages -}}
+  {{- $candidateProject := default (dict) (index $candidate.Params "project") -}}
+  {{- $candidateID := index $candidateProject "id" -}}
+  {{- if $candidateID -}}
+    {{- $dependencyLinks = merge $dependencyLinks (dict $candidateID $candidate.RelPermalink) -}}
+  {{- end -}}
+{{- end -}}
 {{- $screenshots := slice -}}
 {{- with (index $metadata "screenshot") -}}
   {{- if reflect.IsSlice . -}}
@@ -21,5 +31,5 @@
 {{- end -}}
 
 {{- partial "project/section-screenshots.html" (dict "title" $page.Title "screenshots" $screenshots) -}}
-{{- partial "project/section-details.html" (dict "project" $project "author" $author) -}}
+{{- partial "project/section-details.html" (dict "project" $project "author" $author "dependencyLinks" $dependencyLinks "mode" $mode) -}}
 {{- partial "project/section-additional-fields.html" (dict "project" $project "metadata" $metadata "author" $author) -}}

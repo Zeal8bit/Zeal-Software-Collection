@@ -9,7 +9,7 @@
   {{ .Content }}
   </section>
 
-  {{- partial "project/project-sections.html" (dict "page" .) -}}
+  {{- partial "project/project-sections.html" (dict "page" . "mode" "page") -}}
 
   <p><a href="{{ printf "/%s/" .Params.category_key }}">Back to category</a> | <a href="/">Back to collection index</a></p>
 {{ end }}

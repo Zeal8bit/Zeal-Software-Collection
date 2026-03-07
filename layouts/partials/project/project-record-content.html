@@ -1,7 +1,7 @@
 {{- $page := .page -}}
 {{- $project := default (dict) (index $page.Params "project") -}}
 {{- $entryID := default (index $project "repo") (index $project "id") -}}
-{{- $body := partial "project/project-sections.html" (dict "page" $page) -}}
+{{- $body := partial "project/project-sections.html" (dict "page" $page "mode" "modal") -}}
 {{- partial "project/modal-window.html" (dict
   "modalClass" "bbs-modal bbs-modal__record"
   "title" (print (upper $page.Title) " :: PROJECT RECORD")
