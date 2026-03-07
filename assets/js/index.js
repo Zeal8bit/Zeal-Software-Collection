@@ -84,7 +84,9 @@
   }
 
   function initEntryModal() {
-    var viewButtons = Array.prototype.slice.call(document.querySelectorAll(".view-button"));
+    var viewButtons = Array.prototype.slice.call(
+      document.querySelectorAll(".view-button[data-entry-id]")
+    );
     var records = Array.prototype.slice.call(
       document.querySelectorAll("dialog.bbs-modal.bbs-modal__record[data-entry-id]")
     );

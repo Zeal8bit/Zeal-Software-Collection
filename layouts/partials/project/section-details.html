@@ -1,0 +1,20 @@
+{{- $project := default (dict) .project -}}
+{{- $author := default (dict) .author -}}
+<section>
+  <h2>Details</h2>
+  <ul class="collection">
+    {{ with $project.id }}<li><strong>ID:</strong> {{ . }}</li>{{ end }}
+    {{ with $project.repo }}<li><strong>Repository:</strong> <a href="{{ . }}">{{ . }}</a></li>{{ end }}
+    {{ with $author.name }}
+      <li><strong>Author:</strong>
+        {{ with $author.link }}<a href="{{ . }}">{{ $author.name }}</a>{{ else }}{{ $author.name }}{{ end }}
+      </li>
+    {{ end }}
+    {{ with $project.aliases }}
+      {{ if gt (len .) 0 }}<li><strong>Aliases:</strong> {{ delimit . ", " }}</li>{{ end }}
+    {{ end }}
+    {{ with $project.depends_on }}
+      {{ if gt (len .) 0 }}<li><strong>Depends On:</strong> {{ delimit . ", " }}</li>{{ end }}
+    {{ end }}
+  </ul>
+</section>

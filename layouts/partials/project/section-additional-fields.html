@@ -1,0 +1,34 @@
+{{- $project := default (dict) .project -}}
+{{- $metadata := default (dict) .metadata -}}
+{{- $author := default (dict) .author -}}
+{{- $additionalFields := dict -}}
+{{- range $key, $value := $project -}}
+  {{- if and (ne $key "id") (ne $key "repo") (ne $key "aliases") (ne $key "depends_on") (ne $key "metadata") -}}
+    {{- $additionalFields = merge $additionalFields (dict $key $value) -}}
+  {{- end -}}
+{{- end -}}
+{{- $metadataAdditional := dict -}}
+{{- range $key, $value := $metadata -}}
+  {{- if and (ne $key "name") (ne $key "description") (ne $key "category") (ne $key "author") (ne $key "flags") (ne $key "screenshot") (ne $key "screenshots") -}}
+    {{- $metadataAdditional = merge $metadataAdditional (dict $key $value) -}}
+  {{- end -}}
+{{- end -}}
+{{- $authorAdditional := dict -}}
+{{- range $key, $value := $author -}}
+  {{- if and (ne $key "name") (ne $key "link") -}}
+    {{- $authorAdditional = merge $authorAdditional (dict $key $value) -}}
+  {{- end -}}
+{{- end -}}
+{{- if gt (len $authorAdditional) 0 -}}
+  {{- $metadataAdditional = merge $metadataAdditional (dict "author" $authorAdditional) -}}
+{{- end -}}
+{{- if gt (len $metadataAdditional) 0 -}}
+  {{- $additionalFields = merge $additionalFields (dict "metadata" $metadataAdditional) -}}
+{{- end -}}
+{{ with $additionalFields }}
+  <section>
+    <h2>Additional Fields</h2>
+    {{- $extraYaml := (jsonify .) | transform.Remarshal "yaml" -}}
+    <pre class="bbs-modal__content">{{ $extraYaml }}</pre>
+  </section>
+{{ end }}

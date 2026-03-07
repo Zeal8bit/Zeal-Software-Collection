@@ -10,7 +10,7 @@
     <atom:link href="{{ "/rss.xml" | absURL }}" rel="self" type="application/rss+xml" />
     {{- range .Site.RegularPages.ByLastmod.Reverse }}
       {{- $itemLink := .RelPermalink -}}
-      {{- with .Params.project_id -}}
+      {{- with .Params.project.id -}}
         {{- $itemLink = printf "/?project=%s" (urlquery .) -}}
       {{- end }}
       <item>

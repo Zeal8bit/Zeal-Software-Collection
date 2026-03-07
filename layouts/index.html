@@ -1,5 +1,6 @@
 {{- define "main" -}}
   {{- $categories := partial "util/categories.html" . -}}
+  {{- $projectPages := where .Site.RegularPages "Params.layout" "project-detail" -}}
   {{- partial "misc/titlebar.html" (dict "title" "ZEAL BBS // NODE 01" "section" "COLLECTION.MSG") -}}
 
   <p class="system-line">CONNECT 9600 BAUD | ANSI ENABLED | MESSAGE BASE: SOFTWARE COLLECTION</p>
@@ -15,5 +16,5 @@
     <li><span class="sprite-icon" aria-hidden="true">⚠️</span> Work in progress, may not be usable yet.</li>
   </ul>
 
-  {{- partial "project/collection-category-sections.html" (dict "categories" $categories "dependencies" $.Site.Data.collection.dependencies) -}}
+  {{- partial "project/collection-category-sections.html" (dict "categories" $categories "projectPages" $projectPages) -}}
 {{- end -}}

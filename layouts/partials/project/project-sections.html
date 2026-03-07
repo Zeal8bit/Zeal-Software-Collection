@@ -1,0 +1,25 @@
+{{- $page := .page -}}
+{{- $project := default (dict) $page.Params.project -}}
+{{- $metadata := default (dict) $project.metadata -}}
+{{- $author := default (dict) $metadata.author -}}
+{{- $screenshots := slice -}}
+{{- with $metadata.screenshot -}}
+  {{- if reflect.IsSlice . -}}
+    {{- $screenshots = . -}}
+  {{- else -}}
+    {{- $screenshots = $screenshots | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- with $metadata.screenshots -}}
+  {{- if reflect.IsSlice . -}}
+    {{- range . -}}
+      {{- $screenshots = $screenshots | append . -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $screenshots = $screenshots | append . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- partial "project/section-screenshots.html" (dict "title" $page.Title "screenshots" $screenshots) -}}
+{{- partial "project/section-details.html" (dict "project" $project "author" $author) -}}
+{{- partial "project/section-additional-fields.html" (dict "project" $project "metadata" $metadata "author" $author) -}}

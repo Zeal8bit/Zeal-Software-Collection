@@ -7,10 +7,11 @@
   {{ with .Params.description }}<p class="intro">{{ . }}</p>{{ end }}
 
   {{- $categoryKey := default "" .Params.category_key -}}
+  {{- $projectPages := where .Site.RegularPages "Params.layout" "project-detail" -}}
   {{- if $categoryKey }}
     {{- partial "project/collection-category-sections.html" (dict
       "categories" (slice $categoryKey)
-      "dependencies" .Site.Data.collection.dependencies
+      "projectPages" $projectPages
       "showSectionHeading" false
     ) -}}
   {{- end }}

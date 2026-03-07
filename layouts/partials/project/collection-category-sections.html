@@ -1,48 +1,53 @@
 {{- $categories := .categories -}}
-{{- $dependencies := .dependencies -}}
+{{- $projectPages := .projectPages -}}
 {{- $showSectionHeading := .showSectionHeading | default true -}}
 {{- range $category := $categories }}
   {{- $label := partial "util/category-label.html" $category -}}
   {{- $emoji := partial "util/category-emoji.html" $category -}}
-  {{- $entries := partial "util/dependencies-for-category.html" (dict "dependencies" $dependencies "category" $category) -}}
+  {{- $entries := sort (where $projectPages "Params.category_key" $category) "Title" -}}
   <section data-category="{{ $category }}">
     {{- if $showSectionHeading }}
       <h2><span class="sprite-icon" aria-hidden="true">{{ $emoji }}</span> {{ $label }} BOARD</h2>
     {{- end }}
     <ul class="collection">
-      {{- range $entry := $entries }}
-        {{- $dependency := partial "util/dependency-context.html" $entry -}}
-        {{- $metadata := $dependency.metadata -}}
-        {{- $entryID := default $entry.repo $entry.id -}}
-        {{- $detailSlugSource := default $metadata.name $entry.id -}}
-        {{- $detailSlug := replaceRE "^-+|-+$" "" (replaceRE "[^a-z0-9]+" "-" (lower $detailSlugSource)) -}}
+      {{- range $page := $entries }}
+        {{- $project := default (dict) $page.Params.project -}}
+        {{- $metadata := default (dict) $project.metadata -}}
+        {{- $entryID := default $project.repo $project.id -}}
+        {{- $flags := default (slice) $metadata.flags -}}
+        {{- $authorName := $metadata.author.name -}}
+        {{- $authorLink := $metadata.author.link -}}
+        {{- $description := default $page.Params.description $metadata.description -}}
+        {{- $isDeprecated := in $flags "deprecated" -}}
+        {{- $isWorkInProgress := in $flags "work_in_progress" -}}
+        {{- $hasHardwareExtension := in $flags "hardware_extension" -}}
           <li
-            data-name="{{ lower $metadata.name }}"
-            {{ if $dependency.isDeprecated }}class="deprecated"{{ end }}
+            data-name="{{ lower $page.Title }}"
+            {{ if $isDeprecated }}class="deprecated"{{ end }}
           >
-            {{- if $dependency.isDeprecated }}<del>{{ end -}}
-            <a href="{{ $entry.repo }}">{{ $metadata.name }}</a>
+            {{- if $isDeprecated }}<del>{{ end -}}
+            <a href="{{ $project.repo }}">{{ $page.Title }}</a>
             by
-            {{- with $dependency.authorLink }}
-              <a href="{{ . }}">@{{ $dependency.authorName }}</a>
+            {{- with $authorLink }}
+              <a href="{{ . }}">@{{ $authorName }}</a>
             {{- else }}
-              @{{ $dependency.authorName }}
+              @{{ $authorName }}
             {{- end }}
-            {{- if $dependency.isWorkInProgress }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
-            {{- if $dependency.hasHardwareExtension }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
-            : {{ $metadata.description }}
+            {{- if $isWorkInProgress }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
+            {{- if $hasHardwareExtension }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
+            : {{ $description }}
             <button
               class="view-button"
               type="button"
-              data-entry-name="{{ $metadata.name }}"
+              data-entry-name="{{ $page.Title }}"
               data-entry-id="{{ $entryID }}"
               aria-haspopup="dialog"
             >
               VIEW
             </button>
-            <a class="view-button" href="{{ printf "/%s/%s/" $category $detailSlug }}">PAGE</a>
-            {{- if $dependency.isDeprecated }}</del> <strong>DEPRECATED</strong>{{ end -}}
-            {{- partial "project/project-record-content.html" (dict "entry" $entry "metadata" $metadata "entryID" $entryID) -}}
+            <a class="view-button" href="{{ $page.RelPermalink }}">PAGE</a>
+            {{- if $isDeprecated }}</del> <strong>DEPRECATED</strong>{{ end -}}
+            {{- partial "project/project-record-content.html" (dict "page" $page) -}}
           </li>
       {{- end }}
     </ul>

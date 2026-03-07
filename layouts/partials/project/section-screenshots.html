@@ -1,0 +1,16 @@
+{{- $title := .title -}}
+{{- $screenshots := default (slice) .screenshots -}}
+{{- with $screenshots }}
+  {{- if gt (len .) 0 }}
+    <section>
+      <h2>Screenshot{{ if gt (len .) 1 }}s{{ end }}</h2>
+      <div class="bbs-modal__screenshots-list">
+        {{- range $index, $url := . }}
+          <a class="bbs-modal__screenshot" href="{{ $url }}" target="_blank" rel="noreferrer noopener">
+            <img src="{{ $url }}" alt="{{ $title }} screenshot {{ add $index 1 }}" loading="lazy">
+          </a>
+        {{- end }}
+      </div>
+    </section>
+  {{- end }}
+{{- end }}
