@@ -62,8 +62,24 @@
       updateStatus(visibleCount, selectedCategory, searchTerm);
     }
 
+    function applyFiltersFromQueryParam() {
+      var params = new URLSearchParams(window.location.search || "");
+      var categoryParam = params.get("cat");
+      var normalizedCategory = categoryParam ? categoryParam.toLowerCase() : "";
+      var hasMatchingOption = Array.prototype.slice
+        .call(categoryInput.options)
+        .some(function (option) {
+          return option.value === normalizedCategory;
+        });
+
+      if (hasMatchingOption) {
+        categoryInput.value = normalizedCategory;
+      }
+    }
+
     categoryInput.addEventListener("change", applyFilters);
     searchInput.addEventListener("input", applyFilters);
+    applyFiltersFromQueryParam();
     applyFilters();
   }
 
@@ -179,6 +195,25 @@
       focusModalTarget();
     }
 
+    function openProjectFromQueryParam() {
+      var search = window.location.search || "";
+      var params = new URLSearchParams(search);
+      var projectId = params.get("project");
+      var match = null;
+
+      if (!projectId) {
+        return;
+      }
+
+      match = viewButtons.filter(function (button) {
+        return button.getAttribute("data-entry-id") === projectId;
+      })[0];
+
+      if (match) {
+        openModal(match);
+      }
+    }
+
     viewButtons.forEach(function (button) {
       button.addEventListener("click", function () {
         openModal(button);
@@ -228,6 +263,8 @@
         openAdjacentEntry(event.key === "ArrowRight" ? 1 : -1);
       }
     });
+
+    openProjectFromQueryParam();
   }
 
   if (document.readyState === "loading") {

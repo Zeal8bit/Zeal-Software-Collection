@@ -50,6 +50,31 @@ def write_front_matter(path: Path, front_matter: dict, body: str = "") -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def collect_extra_fields(entry: dict, metadata: dict, author: dict) -> dict:
+    extras: dict[str, object] = {}
+
+    top_level_used = {"id", "repo", "aliases", "depends_on", "metadata"}
+    metadata_used = {"name", "description", "category", "author", "screenshot", "screenshots"}
+    author_used = {"name", "link"}
+
+    for key, value in entry.items():
+        if key in top_level_used or value is None:
+            continue
+        extras[key] = value
+
+    for key, value in metadata.items():
+        if key in metadata_used or value is None:
+            continue
+        extras[f"metadata.{key}"] = value
+
+    for key, value in author.items():
+        if key in author_used or value is None:
+            continue
+        extras[f"metadata.author.{key}"] = value
+
+    return extras
+
+
 def _ruby_yaml_load(path: Path) -> dict:
     command = [
         "ruby",
@@ -113,7 +138,7 @@ def main() -> int:
             "title": f"{category_name} Category",
             "description": f"Projects in the {category_name} category.",
             "category_key": category,
-            "layout": "category-section",
+            "layout": "category-list",
         }
         if category_lastmods:
             category_front_matter["lastmod"] = max(category_lastmods)
@@ -142,6 +167,8 @@ def main() -> int:
             single_screenshot = metadata.get("screenshot")
             if isinstance(single_screenshot, str) and single_screenshot:
                 screenshots.append(single_screenshot)
+            elif isinstance(single_screenshot, list):
+                screenshots.extend([item for item in single_screenshot if isinstance(item, str) and item])
             multi_screenshots = metadata.get("screenshots")
             if isinstance(multi_screenshots, list):
                 screenshots.extend([item for item in multi_screenshots if isinstance(item, str) and item])
@@ -149,6 +176,7 @@ def main() -> int:
                 screenshots.append(multi_screenshots)
 
             author = metadata.get("author", {}) or {}
+            extra_fields = collect_extra_fields(entry, metadata, author)
             front_matter = {
                 "title": name,
                 "description": metadata.get("description"),
@@ -160,8 +188,10 @@ def main() -> int:
                 "depends_on": entry.get("depends_on", []) or [],
                 "screenshots": screenshots,
                 "category_key": category,
-                "layout": "category-project",
+                "layout": "project-detail",
             }
+            if extra_fields:
+                front_matter["extra_fields"] = extra_fields
             if entry_id in entry_lastmod:
                 front_matter["lastmod"] = entry_lastmod[entry_id]
 

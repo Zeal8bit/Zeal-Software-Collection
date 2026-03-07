@@ -1,0 +1,19 @@
+{{ define "title" }}{{ .Title }} - Software Collect - Zeal 8-bit Computer{{ end }}
+
+{{ define "main" }}
+  {{- partial "misc/titlebar.html" (dict "title" "ZEAL BBS // NODE 01" "section" "CATEGORY.DIR") -}}
+
+  <h1>{{ .Title }}</h1>
+  {{ with .Params.description }}<p class="intro">{{ . }}</p>{{ end }}
+
+  {{- $categoryKey := default "" .Params.category_key -}}
+  {{- if $categoryKey }}
+    {{- partial "project/collection-category-sections.html" (dict
+      "categories" (slice $categoryKey)
+      "dependencies" .Site.Data.collection.dependencies
+      "showSectionHeading" false
+    ) -}}
+  {{- end }}
+
+  <p><a href="/">Back to collection index</a></p>
+{{ end }}

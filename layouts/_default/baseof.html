@@ -14,7 +14,9 @@
     {{- block "extra_head" . }}{{- end }}
   </head>
   <body>
-    {{- block "main" . }}{{- end }}
+    <main class="screen">
+      {{- block "main" . }}{{- end }}
+    </main>
     <script src="{{ $script.RelPermalink }}"></script>
     {{- block "extra_body_end" . }}{{- end }}
   </body>

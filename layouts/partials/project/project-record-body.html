@@ -1,6 +1,8 @@
 {{- $metadata := .metadata -}}
 {{- $yaml := .yaml -}}
 {{- $screenshots := .screenshots -}}
+{{- $escapedYaml := htmlEscape $yaml -}}
+{{- $linkifiedYaml := replaceRE `(https?://[^\s<]+)` `<a href="$1" target="_blank" rel="noreferrer noopener">$1</a>` $escapedYaml -}}
 {{- if gt (len $screenshots) 0 }}
   <div class="bbs-modal__screenshots">
     <p class="bbs-modal__screenshots-title">SCREENSHOTS</p>
@@ -13,4 +15,4 @@
     </div>
   </div>
 {{- end }}
-<pre class="bbs-modal__content">{{ $yaml }}</pre>
+<pre class="bbs-modal__content">{{ $linkifiedYaml | safeHTML }}</pre>

@@ -4,7 +4,13 @@
 {{- $yaml := $entry | transform.Remarshal "yaml" -}}
 {{- $screenshots := slice -}}
 {{- with $metadata.screenshot -}}
-  {{- $screenshots = $screenshots | append . -}}
+  {{- if reflect.IsSlice . -}}
+    {{- range . -}}
+      {{- $screenshots = $screenshots | append . -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $screenshots = $screenshots | append . -}}
+  {{- end -}}
 {{- end -}}
 {{- with $metadata.screenshots -}}
   {{- if reflect.IsSlice . -}}

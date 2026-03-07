@@ -1,24 +1,19 @@
 {{- define "main" -}}
   {{- $categories := partial "util/categories.html" . -}}
-  <main class="screen">
-    <div class="titlebar">
-      <span>ZEAL BBS // NODE 01</span>
-      <span>COLLECTION.MSG</span>
-    </div>
+  {{- partial "misc/titlebar.html" (dict "title" "ZEAL BBS // NODE 01" "section" "COLLECTION.MSG") -}}
 
-    <p class="system-line">CONNECT 9600 BAUD | ANSI ENABLED | MESSAGE BASE: SOFTWARE COLLECTION</p>
+  <p class="system-line">CONNECT 9600 BAUD | ANSI ENABLED | MESSAGE BASE: SOFTWARE COLLECTION</p>
 
-    <h1>Zeal 8-bit Computer<br />Software Collection</h1>
+  <h1>Zeal 8-bit Computer<br />Software Collection</h1>
 
-    <p class="intro">In this repository, you will find a list of existing software for Zeal 8-bit Computer.</p>
+  <p class="intro">In this repository, you will find a list of existing software for Zeal 8-bit Computer.</p>
 
-    {{- partial "filter/collection-filter-panel.html" (dict "categories" $categories) -}}
+  {{- partial "filter/collection-filter-panel.html" (dict "categories" $categories) -}}
 
-    <ul class="legend">
-      <li><span class="sprite-icon" aria-hidden="true">🪛</span> Hardware extension required.</li>
-      <li><span class="sprite-icon" aria-hidden="true">⚠️</span> Work in progress, may not be usable yet.</li>
-    </ul>
+  <ul class="legend">
+    <li><span class="sprite-icon" aria-hidden="true">🪛</span> Hardware extension required.</li>
+    <li><span class="sprite-icon" aria-hidden="true">⚠️</span> Work in progress, may not be usable yet.</li>
+  </ul>
 
-    {{- partial "project/collection-category-sections.html" (dict "categories" $categories "dependencies" $.Site.Data.collection.dependencies) -}}
-  </main>
+  {{- partial "project/collection-category-sections.html" (dict "categories" $categories "dependencies" $.Site.Data.collection.dependencies) -}}
 {{- end -}}

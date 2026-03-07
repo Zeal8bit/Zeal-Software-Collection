@@ -1,11 +1,14 @@
 {{- $categories := .categories -}}
 {{- $dependencies := .dependencies -}}
+{{- $showSectionHeading := .showSectionHeading | default true -}}
 {{- range $category := $categories }}
   {{- $label := partial "util/category-label.html" $category -}}
   {{- $emoji := partial "util/category-emoji.html" $category -}}
   {{- $entries := partial "util/dependencies-for-category.html" (dict "dependencies" $dependencies "category" $category) -}}
   <section data-category="{{ $category }}">
-    <h2><span class="sprite-icon" aria-hidden="true">{{ $emoji }}</span> {{ $label }} BOARD</h2>
+    {{- if $showSectionHeading }}
+      <h2><span class="sprite-icon" aria-hidden="true">{{ $emoji }}</span> {{ $label }} BOARD</h2>
+    {{- end }}
     <ul class="collection">
       {{- range $entry := $entries }}
         {{- $dependency := partial "util/dependency-context.html" $entry -}}
