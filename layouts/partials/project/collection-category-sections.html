@@ -27,26 +27,30 @@
             {{ if $isDeprecated }}class="deprecated"{{ end }}
           >
             {{- if $isDeprecated }}<del>{{ end -}}
-            <a href="{{ index $project "repo" }}">{{ $page.Title }}</a>
-            by
-            {{- with $authorLink }}
-              <a href="{{ . }}">@{{ $authorName }}</a>
-            {{- else }}
-              @{{ $authorName }}
-            {{- end }}
-            {{- if $isWorkInProgress }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
-            {{- if $hasHardwareExtension }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
-            : {{ $description }}
-            <button
-              class="view-button"
-              type="button"
-              data-entry-name="{{ $page.Title }}"
-              data-entry-id="{{ $entryID }}"
-              aria-haspopup="dialog"
-            >
-              VIEW
-            </button>
-            <a class="view-button" href="{{ $page.RelPermalink }}">PAGE</a>
+            <span class="collection-entry__summary">
+              <a href="{{ index $project "repo" }}">{{ $page.Title }}</a>
+              by
+              {{- with $authorLink }}
+                <a href="{{ . }}">@{{ $authorName }}</a>
+              {{- else }}
+                @{{ $authorName }}
+              {{- end }}
+              {{- if $isWorkInProgress }} <span class="flag sprite-icon" aria-label="Work in progress">⚠️</span>{{ end -}}
+              {{- if $hasHardwareExtension }} <span class="flag sprite-icon" aria-label="Hardware extension">🪛</span>{{ end -}}
+              : {{ $description }}
+            </span>
+            <span class="collection-entry__actions">
+              <button
+                class="view-button"
+                type="button"
+                data-entry-name="{{ $page.Title }}"
+                data-entry-id="{{ $entryID }}"
+                aria-haspopup="dialog"
+              >
+                VIEW
+              </button>
+              <a class="view-button" href="{{ $page.RelPermalink }}">PAGE</a>
+            </span>
             {{- if $isDeprecated }}</del> <strong>DEPRECATED</strong>{{ end -}}
             {{- partial "project/project-record-content.html" (dict "page" $page) -}}
           </li>
