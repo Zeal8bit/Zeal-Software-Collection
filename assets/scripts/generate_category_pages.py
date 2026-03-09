@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import re
 import sys
-import json
 import argparse
 import subprocess
+import shutil
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +15,20 @@ try:
     import yaml  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover
     yaml = None
+
+if yaml is None:
+    print(
+        "Missing dependency: PyYAML. Install it with `python3 -m pip install pyyaml` and rerun.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+if shutil.which("git") is None:
+    print(
+        "Missing dependency: `git` not found on PATH. Install Git and rerun.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 
 def find_repo_root(start: Path) -> Path:
@@ -41,42 +55,11 @@ def titleize_category(category: str) -> str:
 
 
 def write_front_matter(path: Path, front_matter: dict, body: str = "") -> None:
-    if yaml is not None:
-        yaml_text = yaml.safe_dump(front_matter, sort_keys=False, allow_unicode=True).strip()
-    else:
-        yaml_text = _ruby_yaml_dump(front_matter)
+    yaml_text = yaml.safe_dump(front_matter, sort_keys=False, allow_unicode=True).strip()
     content = f"---\n{yaml_text}\n---\n"
     if body.strip():
         content += f"\n{body.rstrip()}\n"
     path.write_text(content, encoding="utf-8")
-
-
-def _ruby_yaml_load(path: Path) -> dict:
-    command = [
-        "ruby",
-        "-ryaml",
-        "-rjson",
-        "-e",
-        "print JSON.dump(YAML.load_file(ARGV[0]))",
-        str(path),
-    ]
-    result = subprocess.run(command, capture_output=True, text=True, check=True)
-    loaded = json.loads(result.stdout)
-    return loaded if isinstance(loaded, dict) else {}
-
-
-def _ruby_yaml_dump(data: dict) -> str:
-    payload = json.dumps(data)
-    command = [
-        "ruby",
-        "-ryaml",
-        "-rjson",
-        "-e",
-        "obj=JSON.parse(ARGV[0]); print YAML.dump(obj).sub(/\\A---\\s*\\n/, '').strip",
-        payload,
-    ]
-    result = subprocess.run(command, capture_output=True, text=True, check=True)
-    return result.stdout
 
 
 def parse_args() -> argparse.Namespace:
@@ -99,10 +82,7 @@ def main() -> int:
         print(f"collection.yml not found at {COLLECTION_PATH}", file=sys.stderr)
         return 1
 
-    if yaml is not None:
-        data = yaml.safe_load(COLLECTION_PATH.read_text(encoding="utf-8")) or {}
-    else:
-        data = _ruby_yaml_load(COLLECTION_PATH)
+    data = yaml.safe_load(COLLECTION_PATH.read_text(encoding="utf-8")) or {}
     entries = data.get("dependencies", []) or []
     entry_lastmod = load_entry_lastmod_by_id(COLLECTION_PATH, [entry.get("id") for entry in entries])
     target_entry_ids: set[str] | None = None

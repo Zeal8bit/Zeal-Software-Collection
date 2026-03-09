@@ -28,8 +28,16 @@ jobs:
           hugo-version: '0.157.0'
           extended: true
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: python3 -m pip install --upgrade pip pyyaml
+
       - name: Generate category content
-        run: assets/scripts/generate_category_pages.py
+        run: python3 assets/scripts/generate_category_pages.py
 
       - name: Build site
         run: hugo
