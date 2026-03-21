@@ -32,7 +32,7 @@ Projects marked with:
     {{- if $dependency.isDeprecated }}
       {{- $item = print "~~" $item "~~ **DEPRECATED**" }}
     {{- end }}
-    {{ print "* " $item }}
+    {{- print "\n* " $item }}
   {{- end }}
 {{- end }}
 
