@@ -98,6 +98,7 @@ Please:
 1. Check that your YAML formatting is valid and list items are indented consistently.
 2. Make sure the project metadata is complete and uses the correct category and flags.
 3. Keep descriptions short and factual.
+4. Run `make` to regenerate the site output and update `README.md` before opening your pull request.
 
 ## Local Testing And Site Updates
 
@@ -147,9 +148,10 @@ hugo server --disableFastRender
 
 ### Build
 
-To generate the site into `_site/`:
+To generate category/project pages and the site into `_site/`:
 
 ```sh
+python3 assets/scripts/generate_category_pages.py
 hugo
 ```
 
@@ -159,7 +161,13 @@ Or use the Makefile target:
 make
 ```
 
-`make` runs Hugo and then copies `_site/README.md` to the repository root as `README.md`.
+`make` regenerates category/project pages, runs Hugo, and then copies `_site/README.md` to the repository root as `README.md`.
+
+The page generator requires PyYAML:
+
+```sh
+python3 -m pip install pyyaml
+```
 
 To remove generated output:
 
