@@ -150,49 +150,49 @@ dependencies:
       description: Pong-inspired game for Zeal 8-bit Computer
       author:
         name: arcadia6502
-        link: https://github.com/harlock74/zeal-pongy
+        link: https://github.com/harlock74
     aliases:
       - zpong
 
   - id: harlock74/zeal-videopoker
     repo: https://github.com/harlock74/zeal-videopoker.git
     metadata:
-      screenshot: 
+      screenshot: https://github.com/harlock74/zeal-videopoker/blob/main/docs/screenshots/2.png
       name: zeal-videopoker
       category:
         - game
       description: Video poker-inspired game for Zeal 8-bit Computer
       author:
         name: arcadia6502
-        link: https://github.com/harlock74/zeal-videopoker
+        link: https://github.com/harlock74
     aliases:
       - zpoker
 
   - id: harlock74/zeal-couples
     repo: https://github.com/harlock74/zeal-couples.git
     metadata:
-      screenshot: 
+      screenshot: https://github.com/harlock74/zeal-couples/blob/main/docs/screenshots/2.png
       name: zeal-couples
       category:
         - game
       description: Poker cards memory-inspired game for Zeal 8-bit Computer
       author:
         name: arcadia6502
-        link: https://github.com/harlock74/zeal-couples
+        link: https://github.com/harlock74
     aliases:
       - zcouples
 
   - id: harlock74/zeal-solitaire
     repo: https://github.com/harlock74/zeal-solitaire.git
     metadata:
-      screenshot: 
+      screenshot: https://github.com/harlock74/zeal-solitaire/blob/main/docs/screenshots/2.png
       name: zeal-solitaire
       category:
         - game
       description: Solitaire-inspired game for Zeal 8-bit Computer
       author:
         name: arcadia6502
-        link: https://github.com/harlock74/zeal-solitaire
+        link: https://github.com/harlock74
     aliases:
       - zsol
 
