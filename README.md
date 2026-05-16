@@ -16,6 +16,10 @@ Projects marked with:
 * [Game of Life](https://github.com/TurBoss/Zeal-8bit_conway.git) by [@TurBoss](https://github.com/TurBoss): Conway's Game of Life for Zeal 8-bit OS
 * [Closure](https://github.com/zoul0813/zeal-closure.git) by [@zoul0813](https://github.com/zoul0813): Blockade-inspired game for Zeal 8-bit Computer
 * [CHIP-8](https://github.com/Zeal8bit/Zeal-Chip8.git) by [@Zeal8bit](https://github.com/Zeal8bit) ⚠️: CHIP-8 emulator for Zeal 8-bit Computer
+* [Pongy](https://github.com/harlock74/zeal-pongy.git) by [@arcadia6502](https://github.com/harlock74): Pong-inspired game for Zeal 8-bit Computer
+* [Video Poker](https://github.com/harlock74/zeal-videopoker.git) by [@arcadia6502](https://github.com/harlock74): Video poker-inspired game for Zeal 8-bit Computer
+* [Couples](https://github.com/harlock74/zeal-couples.git) by [@arcadia6502](https://github.com/harlock74): Poker cards memory-inspired game for Zeal 8-bit Computer
+* [Solitaire](https://github.com/harlock74/zeal-solitaire.git) by [@arcadia6502](https://github.com/harlock74): Solitaire-inspired game for Zeal 8-bit Computer
 
 ## 💾 Demo
 * [Zeal Boing](https://github.com/zoul0813/zeal-boing.git) by [@zoul0813](https://github.com/zoul0813): Boing Ball-inspired demo for Zeal 8-bit Computer
