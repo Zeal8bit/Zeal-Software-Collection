@@ -140,6 +140,20 @@ dependencies:
     aliases:
       - chip8
 
+       - id: harlock74/zeal-pongy
+    repo: https://github.com/harlock74/zeal-pongy.git
+    metadata:
+      screenshot: 
+      name: zeal-pongy
+      category:
+        - game
+      description: Pong-inspired game for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74/zeal-pongy
+    aliases:
+      - zpong
+
   # Demos
   - id: zoul0813/zeal-boing
     repo: https://github.com/zoul0813/zeal-boing.git
