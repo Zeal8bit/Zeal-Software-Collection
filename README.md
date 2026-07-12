@@ -31,6 +31,7 @@ Projects marked with:
 * [ZShell](https://github.com/zoul0813/zeal-zshell.git) by [@zoul0813](https://github.com/zoul0813): Shell for Zeal 8-bit OS with history and batch processing
 * [Zepto](https://github.com/Zeal8bit/Zepto.git) by [@Zeal8bit](https://github.com/Zeal8bit): Nano-inspired text editor written in Z80 assembly
 * [Zeal Piano](https://github.com/zoul0813/zeal-piano.git) by [@zoul0813](https://github.com/zoul0813): Playable piano for Zeal 8-bit Computer
+* [Zeal QR](https://github.com/zoul0813/zeal-qr.git) by [@zoul0813](https://github.com/zoul0813): QR Code generator for Zeal 8-bit Computer
 * [Zeal Music Tracker](https://github.com/zoul0813/zeal-music-tracker.git) by [@zoul0813](https://github.com/zoul0813): Music tracker for Zeal 8-bit Computer
 * [Zeal Commander](https://github.com/zoul0813/zeal-commander.git) by [@zoul0813](https://github.com/zoul0813): Midnight Commander-inspired file manager for Zeal 8-bit Computer
 * [Zeal Coreutils](https://github.com/zoul0813/zeal-coreutils.git) by [@zoul0813](https://github.com/zoul0813): Alternative shell core commands and extra utilities
@@ -48,6 +49,7 @@ Projects marked with:
 * [BBC Basic](https://github.com/Zeal8bit/Zeal-BBC-Basic.git) by [@Zeal8bit](https://github.com/Zeal8bit): BBC Basic port running natively on Zeal 8-bit OS
 * [Zealasm](https://github.com/Zeal8bit/Zealasm.git) by [@Zeal8bit](https://github.com/Zeal8bit): Z80 assembler written in Z80 assembly
 * [Zeal CC](https://github.com/zoul0813/zeal-cc.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: C compiler for Zeal 8-bit OS
+* [Zeal Forth](https://github.com/zoul0813/zeal-forth.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: Forth Interpreter for Zeal 8-bit OS
 * [Zorth](https://github.com/Candid-Moe/Zorth.git) by [@Candid-Moe](https://github.com/Candid-Moe): Forth interpreter for Zeal 8-bit OS
 * [Onomata](https://github.com/chiralos/onomata-src.git) by [@chiralos](https://github.com/chiralos): Custom stack-based language for Zeal 8-bit OS
 * [Zeal Mint](https://github.com/zoul0813/zeal-mint.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: MINT language port for Zeal 8-bit Computer

@@ -307,6 +307,20 @@ dependencies:
     aliases:
       - piano
 
+  - id: zoul0813/zeal-qr
+    repo: https://github.com/zoul0813/zeal-qr.git
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-qr/main/imgs/screenshot000.png
+      name: Zeal QR
+      category:
+        - software
+      description: QR Code generator for Zeal 8-bit Computer
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - qr
+
   - id: zoul0813/zeal-music-tracker
     repo: https://github.com/zoul0813/zeal-music-tracker.git
     metadata:
@@ -417,6 +431,21 @@ dependencies:
         - work_in_progress
     aliases:
       - zealcc
+
+  - id: zoul0813/zeal-forth
+    repo: https://github.com/zoul0813/zeal-forth.git
+    metadata:
+      name: Zeal Forth
+      category:
+        - language
+      description: Forth Interpreter for Zeal 8-bit OS
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+      flags:
+        - work_in_progress
+    aliases:
+      - forth
 
   - id: Candid-Moe/Zorth
     repo: https://github.com/Candid-Moe/Zorth.git
