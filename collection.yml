@@ -156,6 +156,11 @@ dependencies:
 
   - id: harlock74/zeal-videopoker
     repo: https://github.com/harlock74/zeal-videopoker.git
+    build:
+      artifacts:
+        - bin/zpoker
+        - bin/assets
+      root: /games/poker
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-videopoker/main/docs/screenshots/2.png
       name: Video Poker
@@ -171,6 +176,11 @@ dependencies:
 
   - id: harlock74/zeal-couples
     repo: https://github.com/harlock74/zeal-couples.git
+    build:
+      artifacts:
+        - bin/zcouples
+        - bin/assets
+      root: /games/couples
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-couples/main/docs/screenshots/2.png
       name: Couples
@@ -186,6 +196,11 @@ dependencies:
 
   - id: harlock74/zeal-solitaire
     repo: https://github.com/harlock74/zeal-solitaire.git
+    build:
+      artifacts:
+        - bin/zsol
+        - bin/assets
+      root: /games/solitaire
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-solitaire/main/docs/screenshots/2.png
       name: Solitaire
@@ -198,6 +213,43 @@ dependencies:
     aliases:
       - zsol
       - solitaire
+
+  - id: harlock74/zeal-checkers
+    repo: https://github.com/harlock74/zeal-checkers.git
+    build:
+      artifacts:
+        - bin/zcheckers
+        - bin/assets
+      root: /games/checkers
+    metadata:
+      name: Checkers
+      category:
+        - game
+      description: Checkers for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zcheckers
+      - checkers
+
+  - id: harlock74/zeal-minigolf
+    repo: https://github.com/harlock74/zeal-minigolf.git
+    build:
+      artifacts:
+        - bin/zgolf
+      root: /games
+    metadata:
+      name: Minigolf
+      category:
+        - game
+      description: Mini-golf for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zgolf
+      - minigolf
 
   # Demos
   - id: zoul0813/zeal-boing
