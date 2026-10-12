@@ -227,7 +227,7 @@ dependencies:
         link: https://github.com/CaPusto
     aliases:
       - zealmine
-      - mineswepper
+      - minesweeper
 
   - id: harlock74/zeal-checkers
     repo: https://github.com/harlock74/zeal-checkers.git
