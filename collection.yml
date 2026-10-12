@@ -221,7 +221,7 @@ dependencies:
       name: zealmine
       category:
         - game
-      description: Remake mineswepper game for Zeal 8-bit Computer
+      description: Minesweeper for Zeal 8-bit Computer
       author:
         name: CaPusto
         link: https://github.com/CaPusto
