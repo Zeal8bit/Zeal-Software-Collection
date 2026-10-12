@@ -214,6 +214,21 @@ dependencies:
       - zsol
       - solitaire
 
+  - id: CaPusto/zealmine
+    repo: https://github.com/CaPusto/zealmine.git
+    metadata:
+      screenshot: https://raw.githubusercontent.com/CaPusto/zealmine/main/docs/screenshot_title.png
+      name: zealmine
+      category:
+        - game
+      description: Minesweeper for Zeal 8-bit Computer
+      author:
+        name: CaPusto
+        link: https://github.com/CaPusto
+    aliases:
+      - zealmine
+      - minesweeper
+
   - id: harlock74/zeal-checkers
     repo: https://github.com/harlock74/zeal-checkers.git
     build:
