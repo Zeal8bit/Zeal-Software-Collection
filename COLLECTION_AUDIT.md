@@ -45,8 +45,8 @@ Coreutils and Archiver refer to `zoul0813/zeal-coreutils` and
 | zoul0813/zeal-archiver | Coreutils |
 
 ZDE's native resolver accepted the full 48-entry catalog. In a fresh project-local
-workspace, Microbe resolved to OS, Video SDK, Coreutils, Archiver, ZGDK, and then
-Microbe itself, with no prerequisites already installed. The collection tests also check unique IDs, complete dependency
+workspace, the Microbe prerequisite check covered Video SDK, Coreutils, Archiver,
+ZGDK, and Microbe itself, with OS setup handled by ZDE's required dependencies. The collection tests also check unique IDs, complete dependency
 references, acyclic ordering, and Microbe's prerequisite chain.
 
 ## Build and staging corrections

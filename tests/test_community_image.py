@@ -12,7 +12,7 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
-from community_image import manifest, validate_manifest, write_json
+from community_image import bundle_lock, export_bundle, manifest, validate_manifest, write_json
 from build_community_image import install_and_stage, ordered
 import build_community_image as builder
 import publish_community_image as publisher
@@ -69,6 +69,37 @@ class ContentTests(unittest.TestCase):
                 publisher.changed(value, {})
 
 
+class BundleTests(unittest.TestCase):
+    def test_export_waits_for_readers_and_keeps_runs_separate(self):
+        import threading
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sources = [root / "run-a", root / "run-b"]
+            latest = root / "latest"
+            for i, source in enumerate(sources):
+                source.mkdir()
+                (source / "tf.img").write_text(str(i))
+                write_json(source / "build-report.json", {"run": i})
+            export_bundle(sources[0], latest)
+            started, finished = threading.Event(), threading.Event()
+            def writer():
+                started.set()
+                export_bundle(sources[1], latest)
+                finished.set()
+            with bundle_lock(latest):
+                thread = threading.Thread(target=writer)
+                thread.start()
+                self.assertTrue(started.wait(1))
+                self.assertFalse(finished.wait(0.05))
+                self.assertEqual((latest / "tf.img").read_text(), "0")
+                self.assertEqual(json.loads((latest / "build-report.json").read_text())["run"], 0)
+            thread.join(5)
+            self.assertTrue(finished.is_set())
+            self.assertEqual((latest / "tf.img").read_text(), "1")
+            self.assertEqual(json.loads((latest / "build-report.json").read_text())["run"], 1)
+            self.assertEqual((sources[0] / "tf.img").read_text(), "0")
+
+
 class BuilderTests(unittest.TestCase):
     def test_prerequisite_failure_removes_stale_image_and_writes_report(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -77,10 +108,14 @@ class BuilderTests(unittest.TestCase):
             write_json(output / "build-report.json", {"success": True})
             def missing_tool(tool):
                 # A previous successful report must not survive into a new run.
-                active = json.loads((output / "build-report.json").read_text())
+                # The latest completed bundle stays intact while the new run is active.
+                self.assertTrue(json.loads((output / "build-report.json").read_text())["success"])
+                workspace = next((output / "tmp/community-image").iterdir())
+                active = json.loads((workspace / "artifacts/build-report.json").read_text())
                 self.assertFalse(active["success"])
                 return None
-            with patch.object(builder.shutil, "which", side_effect=missing_tool):
+            with patch.object(builder, "ROOT", output), patch.object(
+                    builder.shutil, "which", side_effect=missing_tool):
                 with self.assertRaisesRegex(RuntimeError, "Missing prerequisite"):
                     builder.build(output)
             self.assertFalse((output / "tf.img").exists())
@@ -99,7 +134,7 @@ class BuilderTests(unittest.TestCase):
                     os.environ, {"CONTAINER_CMD": "docker"}), patch.object(
                     builder.shutil, "which", return_value="/bin/tool"), patch.dict(
                     sys.modules, {"yaml": fake_yaml}):
-                for _ in range(2):
+                for _ in range(3):
                     with patch.object(builder, "checked", side_effect=[
                             "", "a" * 40, RuntimeError("clone failed")]):
                         with self.assertRaisesRegex(RuntimeError, "clone failed"):
@@ -108,9 +143,10 @@ class BuilderTests(unittest.TestCase):
                     workspace = Path(report["workspace"])
                     self.assertEqual(workspace.parent, root / "tmp/community-image")
                     self.assertTrue((workspace / "state/collection.yml").is_file())
+                    self.assertEqual(json.loads((workspace / "artifacts/build-report.json").read_text()), report)
                     self.assertFalse(report["success"])
                     workspaces.append(workspace)
-            self.assertNotEqual(*workspaces)
+            self.assertEqual(len(set(workspaces)), 3)
             self.assertTrue(all(workspace.exists() for workspace in workspaces))
 
     def test_verification_always_unmounts(self):
@@ -143,6 +179,9 @@ class BuilderTests(unittest.TestCase):
             def zde(*args):
                 calls.append(args)
                 name = args[-1]
+                active = json.loads((staging.parent / "report.json").read_text())
+                row = next(r for r in active["items"] if r["id"] == name)
+                self.assertEqual(row["status"], "installing" if args[1] == "install" else "staging")
                 rc = 0
                 if args[1] == "install":
                     rc = int(name == "broken")
@@ -156,7 +195,7 @@ class BuilderTests(unittest.TestCase):
                 elif name == "last":
                     (staging / "last").write_text("last")
                 return subprocess.CompletedProcess(args, rc, "")
-            install_and_stage(ids, catalog, zde, staging, report)
+            install_and_stage(ids, catalog, zde, staging, report, staging.parent / "report.json")
             self.assertEqual([c[-1] for c in calls if c[1] == "install"], ids)
             self.assertNotIn(("deps", "stage", "tf", "dependent"), calls)
             self.assertEqual((staging / "app").read_text(), "good")
