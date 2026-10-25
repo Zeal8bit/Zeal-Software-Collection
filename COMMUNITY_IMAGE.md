@@ -17,11 +17,22 @@ The builder selects Docker when available, otherwise Podman; `CONTAINER_CMD=podm
 explicitly selects Podman. No GitHub account, token, or GitHub CLI is required to
 build locally.
 
-The builder creates a temporary ZDE checkout from upstream `main`, including its
+Each invocation creates a fresh ZDE checkout from upstream `main`, including its
 submodules, and pulls the published `zoul0813/zeal-dev-environment:latest` container.
 It uses the pulled image's immutable digest for the rest of the build. The
-checkout and ZDE user state are isolated from your normal ZDE installation and
-removed when the build finishes. ZDE source is not modified.
+checkout and ZDE user state are isolated from your normal ZDE installation. ZDE
+source is not modified.
+
+Each invocation uses one workspace under `tmp/community-image/<unique-run>/` in
+this repo. All dependency installs, builds, and staging operations for that
+invocation share it. Workspaces are ignored by Git and retained after success or
+failure so you can inspect them; remove completed run directories when no longer
+needed. The absolute workspace path is recorded in `build-report.json`.
+
+Within a run directory, `zde/` is `ZDE_PATH`, `state/` is `ZDE_USER_PATH`,
+`zde/mnt/tf/` contains staged files, and `zde/mnt/tf.img` contains the image after
+creation. Your shell environment and system ZDE dependency installations are not
+changed. The Docker/Podman container image cache is shared.
 
 ## Output
 
