@@ -189,3 +189,9 @@ Important files and directories:
 
 - This repository is generated from `collection.yml`; avoid editing `_site/` by hand.
 - If you change templates, SCSS, or JS, Hugo will rebuild the derived assets automatically.
+
+## Community TF image
+
+See [COMMUNITY_IMAGE.md](COMMUNITY_IMAGE.md) to generate a community `tf.img` locally,
+understand partial-build reports, or review the nightly GitHub release workflow.
+The local builder requires no GitHub credentials.

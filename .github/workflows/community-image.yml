@@ -1,0 +1,62 @@
+name: Community TF image
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: community-image
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install builder prerequisites
+        run: python3 -m pip install 'PyYAML==6.0.3'
+      - name: Test community image scripts
+        run: python3 -m unittest discover -s tests -v
+      - name: Build and verify community image
+        run: python3 assets/scripts/build_community_image.py
+      - name: Save image and build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-image
+          path: dist/community/
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: community-image
+          path: dist/community
+      - name: Publish only changed image contents
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 assets/scripts/publish_community_image.py --run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
