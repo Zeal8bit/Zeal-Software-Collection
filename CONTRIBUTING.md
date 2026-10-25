@@ -45,7 +45,7 @@ Optional fields:
 - `branch`: if the project should use a non-default branch
 - `tag`: if the project should point to a specific tag
 - `build`: build metadata
-- `depends_on`: dependency IDs from other entries
+- `depends_on`: direct SDK and library prerequisites by collection ID
 - `metadata.flags`: status flags
 
 ### Valid Categories
@@ -195,3 +195,13 @@ Important files and directories:
 See [COMMUNITY_IMAGE.md](COMMUNITY_IMAGE.md) to generate a community `tf.img` locally,
 understand partial-build reports, or review the nightly GitHub release workflow.
 The local builder requires no GitHub credentials.
+
+When adding or updating an installable project, inspect its build files and declare
+all direct SDK and library prerequisites in `depends_on`. The OS is installed
+as a required ZDE dependency and needs no per-project declaration. A dependency already installed in your
+normal ZDE environment can hide a missing declaration; use the isolated community
+builder to check fresh installs. Set explicit `build.artifacts` when outputs live
+outside the inferred `bin/` or `build/` paths or include companion data files.
+
+See [COLLECTION_AUDIT.md](COLLECTION_AUDIT.md) for the current dependency audit,
+verified artifact corrections, and remaining upstream compatibility failures.

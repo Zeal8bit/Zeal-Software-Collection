@@ -79,6 +79,13 @@ dependencies:
     repo: https://github.com/Zeal8bit/Zeal-VideoBoard-SDK.git
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
+    build:
+      commands:
+        - cmake -S examples/snake -B build-snake
+        - cmake --build build-snake
+      artifacts:
+        - build-snake/snake.bin
+      root: /games
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/snake.png
       name: Snake
@@ -557,7 +564,7 @@ dependencies:
     branch: master
     build:
       artifacts:
-        - bbcbasic.bin
+        - build/bbcbasic.bin
     metadata:
       name: BBC Basic
       category:
@@ -602,6 +609,9 @@ dependencies:
 
   - id: zoul0813/zeal-forth
     repo: https://github.com/zoul0813/zeal-forth.git
+    build:
+      artifacts:
+        - bin/
     metadata:
       name: Zeal Forth
       category:
@@ -635,6 +645,10 @@ dependencies:
 
   - id: chiralos/onomata-src
     repo: https://github.com/chiralos/onomata-src.git
+    # The upstream Zeal target includes a documented, committed binary.
+    build:
+      artifacts:
+        - C-heapless/zos/onoi
     metadata:
       name: Onomata
       category:
