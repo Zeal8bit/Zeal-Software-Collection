@@ -6,3 +6,4 @@ resources/_gen
 hugo.dev.toml
 dist/
 __pycache__/
+.venv/
