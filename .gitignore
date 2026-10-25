@@ -4,3 +4,5 @@ content/
 .hugo_build.lock
 resources/_gen
 hugo.dev.toml
+dist/
+__pycache__/
