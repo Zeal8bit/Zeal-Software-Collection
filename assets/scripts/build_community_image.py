@@ -17,7 +17,7 @@ from community_image import conflicts, manifest, write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
-IMAGE = "zoul0813/zeal-dev-environment:latest"
+IMAGE = "docker.io/zoul0813/zeal-dev-environment:latest"
 # Read the effective catalog through ZDE itself: no duplicate catalog merging rules.
 CATALOG_QUERY = """
 import json
@@ -26,7 +26,8 @@ sys.path.insert(0, "/home/zeal8bit/zde")
 from mods.deps import DepCatalog
 c = DepCatalog()
 print('COMMUNITY_CATALOG=' + json.dumps([
-    dict(id=d.id, parents=d.depends_on, stage_disabled=d.stage_disabled,
+    dict(id=d.id, parents=d.depends_on, categories=d.categories,
+         stage_disabled=d.stage_disabled,
          path=str(d.path_resolved), installed=d.installed,
          revision=c.lock_deps.get(d.id, {})) for d in c.deps]))
 """
@@ -145,10 +146,13 @@ def build(output):
     report = {"version": 1, "success": False, "items": [],
               "started_at": datetime.now(timezone.utc).isoformat()}
     try:
-        for tool in ("git", "docker"):
-            if not shutil.which(tool):
-                raise RuntimeError(f"Missing prerequisite: {tool}")
-        checked(["docker", "info"])
+        if not shutil.which("git"):
+            raise RuntimeError("Missing prerequisite: git")
+        runtime = os.environ.get("CONTAINER_CMD") or next(
+            (tool for tool in ("docker", "podman") if shutil.which(tool)), None)
+        if runtime not in {"docker", "podman"} or not shutil.which(runtime):
+            raise RuntimeError("Missing prerequisite: Docker or Podman")
+        checked([runtime, "info"])
         import yaml
         collection = yaml.safe_load((ROOT / "collection.yml").read_text())
         selected = [d["id"] for d in collection["dependencies"] if d.get("zde") is not False]
@@ -159,13 +163,14 @@ def build(output):
             state.mkdir()
             shutil.copy2(ROOT / "collection.yml", state / "collection.yml")
             checked(["git", "clone", "--branch", "main", "--recurse-submodules", ZDE_REPO, checkout])
-            checked(["docker", "pull", IMAGE])
+            checked([runtime, "pull", IMAGE])
             report["zde_commit"] = checked(["git", "-C", checkout, "rev-parse", "HEAD"]).strip()
-            image_id = checked(["docker", "image", "inspect", IMAGE, "--format",
+            image_id = checked([runtime, "image", "inspect", IMAGE, "--format",
                                 "{{index .RepoDigests 0}}"]).strip()
             report["zde_image"] = image_id
             env = dict(os.environ, ZDE_PATH=str(checkout), ZDE_USER_PATH=str(state),
-                       ZDE_IMAGE_REF=image_id, ZDE_STRICT_EXIT="1", HOST_CWD=str(ROOT))
+                       ZDE_IMAGE_REF=image_id, ZDE_STRICT_EXIT="1", HOST_CWD=str(ROOT),
+                       CONTAINER_CMD=runtime)
             def zde(*args):
                 return run([checkout / "zde", *args], env=env, log=output / "build.log")
             def catalog():
@@ -176,7 +181,13 @@ def build(output):
                                if line.startswith("COMMUNITY_CATALOG="))
                 return {d["id"]: d for d in json.loads(payload)}
             effective = catalog()
-            ids = ordered(effective, selected + ["Zeal8bit/ZealFS"])
+            # Many applications use SDK packages without declaring depends_on.
+            # Make collection libraries available before installing applications.
+            libraries = [dep_id for dep_id in selected
+                         if "library" in [c.casefold() for c in effective[dep_id]["categories"]]]
+            ids = ordered(effective, ["Zeal8bit/Zeal-8-bit-OS",
+                                      "Zeal8bit/Zeal-VideoBoard-SDK",
+                                      *libraries, *selected, "Zeal8bit/ZealFS"])
             staging = checkout / "mnt" / "tf"
             if staging.exists():
                 shutil.rmtree(staging)
@@ -191,7 +202,8 @@ def build(output):
                 raise RuntimeError("ZealFS image tools failed to install")
             content, excluded = manifest(staging)
             report["excluded_names"] = excluded
-            if not any(row["status"] == "included" for row in report["items"]):
+            if (not any(row["status"] == "included" for row in report["items"])
+                    or not any(entry["type"] == "file" for entry in content["entries"])):
                 raise RuntimeError("No software was successfully staged")
             if zde("image", "tf", "create", "--yes", "65536").returncode:
                 raise RuntimeError("TF image creation failed")

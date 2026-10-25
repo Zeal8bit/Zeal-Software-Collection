@@ -13,6 +13,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
 from community_image import manifest, validate_manifest, write_json
 from build_community_image import install_and_stage, ordered
+import build_community_image as builder
 import publish_community_image as publisher
 
 
@@ -23,16 +24,23 @@ class ContentTests(unittest.TestCase):
             (root / "empty").mkdir()
             (root / "app").write_bytes(b"app")
             (root / "link").symlink_to(root / "app")
+            (root / ("é" * 8)).write_text("16-byte name")
             (root / ("é" * 9)).mkdir()
             (root / ("é" * 9) / "hidden").write_text("hidden")
             first, excluded = manifest(root)
             self.assertEqual(excluded, ["é" * 9])
-            self.assertEqual(len(first["entries"]), 3)
+            self.assertEqual(len(first["entries"]), 4)
             validate_manifest(first)
             os.utime(root / "app", (1, 1))
             self.assertEqual(manifest(root)[0], first)
             (root / "app").write_bytes(b"new")
             self.assertNotEqual(manifest(root)[0], first)
+            (root / "app").write_bytes(b"app")
+            self.assertEqual(manifest(root)[0], first)
+            (root / "new").write_text("new file")
+            self.assertNotEqual(manifest(root)[0], first)
+            (root / "new").unlink()
+            self.assertEqual(manifest(root)[0], first)
             (root / "empty").rmdir()
             self.assertNotEqual(manifest(root)[0], first)
 
@@ -61,6 +69,29 @@ class ContentTests(unittest.TestCase):
 
 
 class BuilderTests(unittest.TestCase):
+    def test_prerequisite_failure_removes_stale_image_and_writes_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            (output / "tf.img").write_bytes(b"old image")
+            with patch.object(builder.shutil, "which", return_value=None):
+                with self.assertRaisesRegex(RuntimeError, "Missing prerequisite"):
+                    builder.build(output)
+            self.assertFalse((output / "tf.img").exists())
+            report = json.loads((output / "build-report.json").read_text())
+            self.assertFalse(report["success"])
+            self.assertIn("Missing prerequisite", report["error"])
+
+    def test_verification_always_unmounts(self):
+        calls = []
+        def checked(args):
+            calls.append(args)
+            return ""
+        with patch.object(builder, "checked", checked), patch.object(
+                builder, "manifest", side_effect=ValueError("bad image")):
+            with self.assertRaisesRegex(ValueError, "bad image"):
+                builder.verify_image(Path("/mnt/tf.img"), Path("unused"))
+        self.assertEqual(calls[-1][:2], ["sudo", "umount"])
+
     def test_order_and_cycles(self):
         catalog = {"app": {"parents": ["lib"]}, "lib": {"parents": []}}
         self.assertEqual(ordered(catalog, ["app", "lib"]), ["lib", "app"])
@@ -148,7 +179,7 @@ class ReleaseTests(unittest.TestCase):
                 self.assertEqual(len(edits), int(not fail_upload))
 
     def test_unchanged_and_invalid_baseline_and_lookup_errors(self):
-        for mode in ("unchanged", "invalid", "lookup-failed"):
+        for mode in ("unchanged", "invalid", "lookup-failed", "download-failed"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 (directory / "contents").mkdir()
@@ -162,6 +193,8 @@ class ReleaseTests(unittest.TestCase):
                         return json.dumps([[{"draft": False, "tag_name": publisher.PREFIX + "old",
                                              "published_at": "2026-01-01"}]])
                     if args[:2] == ("release", "download"):
+                        if mode == "download-failed":
+                            raise subprocess.CalledProcessError(1, "gh")
                         baseline = json.loads((directory / "content-manifest.json").read_text())
                         write_json(Path(args[-1]) / "content-manifest.json", {} if mode == "invalid" else baseline)
                     return ""
