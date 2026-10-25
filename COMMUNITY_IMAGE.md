@@ -29,6 +29,11 @@ invocation share it. Workspaces are ignored by Git and retained after success or
 failure so you can inspect them; remove completed run directories when no longer
 needed. The absolute workspace path is recorded in `build-report.json`.
 
+Each run owns its live output bundle and diagnostics in `artifacts/`, including
+failure reports. When the run finishes, it updates `dist/community/` with that
+completed bundle. Concurrent builds keep separate live reports; exporting and
+publishing the latest bundle use a shared lock to keep image/report pairs consistent.
+
 Within a run directory, `zde/` is `ZDE_PATH`, `state/` is `ZDE_USER_PATH`,
 `zde/mnt/tf/` contains staged files, and `zde/mnt/tf.img` contains the image after
 creation. Your shell environment and system ZDE dependency installations are not
@@ -36,20 +41,24 @@ changed. The Docker/Podman container image cache is shared.
 
 ## Output
 
-The default output directory is `dist/community/`:
+Live output is under `<workspace>/artifacts/`. The completed bundle is also
+exported to `dist/community/` by default:
 
 - `tf.img`: verified 64 MiB ZealFS v2 TF image with an MBR.
 - `tf.img.sha256`: image checksum; run `sha256sum -c tf.img.sha256` from this directory.
 - `content-manifest.json`: sorted image-visible paths, directory entries, file sizes,
   and SHA-256 hashes, with a combined content fingerprint.
-- `build-report.json`: included, failed, and skipped items, source revisions,
-  excluded filenames, ZDE revisions, and overall build status.
+- `build-report.json`: live install/staging progress, included, failed, and skipped
+  items, source revisions, excluded filenames, the collection checksum, ZDE
+  revisions, and overall build status.
 - `build.log`: ZDE command output for diagnosing individual failures.
 
 Use `--output dist/my-community-image` to select another output directory under
-this checkout's `dist/`. Generated output is ignored by Git. Rerunning the builder
-removes previous image output first, so a failed build cannot leave an old image
-appearing to be a new successful build. Save any image you want to retain elsewhere.
+this checkout's `dist/`. Generated output is ignored by Git. A new run writes to
+its own workspace first. If the run fails, its completed
+failure bundle replaces the latest output and removes the previous latest image;
+previous run workspaces retain their own files. Monitor the printed workspace
+path for live progress, and use `dist/community/` for the latest completed run.
 
 ## Installation and failure handling
 
@@ -60,9 +69,9 @@ ZDE itself, built-in catalog settings take precedence for matching IDs. Explicit
 collection tags and commits remain pinned; nightly builds do not override them.
 
 Each ZDE-visible item gets its own `zde deps install <id>` invocation, in dependency
-order. The OS and VideoBoard SDK are bootstrapped first, followed by collection
-libraries before applications, because some projects use SDK packages without
-declaring dependency edges. Additional dependencies and ZealFS image tools are installed as needed.
+order. ZDE-required dependencies, including the OS, are installed first during
+environment setup. Collection entries declare additional SDK and library
+prerequisites, so ZDE can install each project in a fresh workspace. Additional dependencies and ZealFS image tools are installed as needed.
 Individual failures do not stop attempts for the remaining items. A dependent
 whose prerequisite failed is not included, even if its repository exists on disk.
 ZDE installs/builds fresh dependencies; no previous build cache is reused.

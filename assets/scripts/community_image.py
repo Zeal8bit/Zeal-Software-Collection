@@ -2,12 +2,52 @@
 from __future__ import annotations
 
 import hashlib
+import fcntl
+from contextlib import contextmanager
 import json
+import os
+import shutil
+import tempfile
 from pathlib import Path
 
 
 def write_json(path: Path, value: object) -> None:
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+    # Readers monitoring a live build must always see a complete JSON document.
+    descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "w") as stream:
+            json.dump(value, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+        temporary.chmod(0o644)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+BUNDLE_FILES = ("tf.img", "tf.img.sha256", "content-manifest.json", "build.log",
+                "build-report.json")
+
+
+@contextmanager
+def bundle_lock(directory: Path, *, exclusive: bool = False):
+    directory.mkdir(parents=True, exist_ok=True)
+    with (directory / ".bundle.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def export_bundle(source: Path, destination: Path) -> None:
+    # Keep the latest snapshot coherent when local builds overlap with publishing.
+    with bundle_lock(destination, exclusive=True):
+        for name in BUNDLE_FILES:
+            if (source / name).is_file():
+                shutil.copyfile(source / name, destination / name)
+            else:
+                (destination / name).unlink(missing_ok=True)
 
 
 def manifest(root: Path, *, filter_names: bool = True) -> tuple[dict, list[str]]:

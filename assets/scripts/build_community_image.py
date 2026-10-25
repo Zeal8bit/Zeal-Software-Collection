@@ -13,7 +13,7 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 
-from community_image import conflicts, manifest, write_json
+from community_image import conflicts, export_bundle, manifest, write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
@@ -26,7 +26,7 @@ sys.path.insert(0, "/home/zeal8bit/zde")
 from mods.deps import DepCatalog
 c = DepCatalog()
 print('COMMUNITY_CATALOG=' + json.dumps([
-    dict(id=d.id, parents=d.depends_on, categories=d.categories,
+    dict(id=d.id, parents=d.depends_on, required=d.required,
          stage_disabled=d.stage_disabled,
          path=str(d.path_resolved), installed=d.installed,
          revision=c.lock_deps.get(d.id, {})) for d in c.deps]))
@@ -77,21 +77,24 @@ def ordered(catalog, selected):
     return result
 
 
-def install_and_stage(ids, catalog, zde, staging, report):
+def install_and_stage(ids, catalog, zde, staging, report, report_path):
     """Failures are isolated per item, including dependency and staging failures."""
     installed = {}
     for dep_id in ids:
-        row = {"id": dep_id, "status": "failed", "stage": "install"}
+        row = {"id": dep_id, "status": "installing", "stage": "install"}
         report["items"].append(row)
+        write_json(report_path, report)
         result = zde("deps", "install", dep_id)
         failed_parents = [p for p in catalog[dep_id]["parents"] if not installed.get(p)]
         if result.returncode or failed_parents:
             row["reason"] = ("Failed dependencies: " + ", ".join(failed_parents)
                              if failed_parents else "Install/build failed; see build.log")
             installed[dep_id] = False
-            continue
-        installed[dep_id] = True
-        row.update(status="installed", stage="stage")
+            row["status"] = "failed"
+        else:
+            installed[dep_id] = True
+            row.update(status="installed", stage="stage")
+        write_json(report_path, report)
 
     for row in report["items"]:
         dep_id = row["id"]
@@ -99,7 +102,10 @@ def install_and_stage(ids, catalog, zde, staging, report):
             continue
         if catalog[dep_id]["stage_disabled"]:
             row.update(status="skipped", reason="Staging disabled by ZDE catalog")
+            write_json(report_path, report)
             continue
+        row["status"] = "staging"
+        write_json(report_path, report)
         before, _ = manifest(staging, filter_names=False)
         backup = staging.with_name("tf-backup")
         shutil.copytree(staging, backup, symlinks=True)
@@ -124,6 +130,7 @@ def install_and_stage(ids, catalog, zde, staging, report):
             row.update(status="failed", reason=str(exc))
         finally:
             shutil.rmtree(backup)
+            write_json(report_path, report)
 
 
 def verify_image(image, output):
@@ -138,13 +145,18 @@ def verify_image(image, output):
             checked(["sudo", "umount", directory])
 
 
-def build(output):
-    output.mkdir(parents=True, exist_ok=True)
-    # A failed rerun must never leave an old image looking like a successful build.
-    for name in ("tf.img", "tf.img.sha256", "content-manifest.json", "verified.json", "build.log"):
-        (output / name).unlink(missing_ok=True)
-    report = {"version": 1, "success": False, "items": [],
+def build(latest_output):
+    report = {"version": 1, "success": False, "status": "building", "items": [],
               "started_at": datetime.now(timezone.utc).isoformat()}
+    workspace_root = ROOT / "tmp" / "community-image"
+    workspace_root.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(
+        prefix=datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-"),
+        dir=workspace_root))
+    report["workspace"] = str(work)
+    output = work / "artifacts"
+    output.mkdir()
+    print(f"Workspace: {work}", flush=True)
     write_json(output / "build-report.json", report)
     try:
         if not shutil.which("git"):
@@ -155,20 +167,14 @@ def build(output):
             raise RuntimeError("Missing prerequisite: Docker or Podman")
         checked([runtime, "info"])
         import yaml
-        collection = yaml.safe_load((ROOT / "collection.yml").read_text())
+        collection_source = (ROOT / "collection.yml").read_bytes()
+        collection = yaml.safe_load(collection_source)
+        report["collection_sha256"] = hashlib.sha256(collection_source).hexdigest()
         selected = [d["id"] for d in collection["dependencies"] if d.get("zde") is not False]
         report["collection_commit"] = checked(["git", "rev-parse", "HEAD"]).strip()
-        workspace_root = ROOT / "tmp" / "community-image"
-        workspace_root.mkdir(parents=True, exist_ok=True)
-        work = Path(tempfile.mkdtemp(
-            prefix=datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-"),
-            dir=workspace_root))
-        report["workspace"] = str(work)
-        print(f"Workspace: {work}", flush=True)
-        write_json(output / "build-report.json", report)
         checkout, state = work / "zde", work / "state"
         state.mkdir()
-        shutil.copy2(ROOT / "collection.yml", state / "collection.yml")
+        (state / "collection.yml").write_bytes(collection_source)
         checked(["git", "clone", "--branch", "main", "--recurse-submodules", ZDE_REPO, checkout])
         checked([runtime, "pull", IMAGE])
         report["zde_commit"] = checked(["git", "-C", checkout, "rev-parse", "HEAD"]).strip()
@@ -188,18 +194,13 @@ def build(output):
                            if line.startswith("COMMUNITY_CATALOG="))
             return {d["id"]: d for d in json.loads(payload)}
         effective = catalog()
-        # Many applications use SDK packages without declaring depends_on.
-        # Make collection libraries available before installing applications.
-        libraries = [dep_id for dep_id in selected
-                     if "library" in [c.casefold() for c in effective[dep_id]["categories"]]]
-        ids = ordered(effective, ["Zeal8bit/Zeal-8-bit-OS",
-                                  "Zeal8bit/Zeal-VideoBoard-SDK",
-                                  *libraries, *selected, "Zeal8bit/ZealFS"])
+        required = [dep["id"] for dep in effective.values() if dep["required"]]
+        ids = ordered(effective, required + selected + ["Zeal8bit/ZealFS"])
         staging = checkout / "mnt" / "tf"
         if staging.exists():
             shutil.rmtree(staging)
         staging.mkdir(parents=True)
-        install_and_stage(ids, effective, zde, staging, report)
+        install_and_stage(ids, effective, zde, staging, report, output / "build-report.json")
         final_catalog = catalog()
         for row in report["items"]:
             row["source"] = final_catalog[row["id"]]["revision"]
@@ -233,13 +234,15 @@ def build(output):
         report["error"] = str(exc)
         raise
     finally:
+        report["status"] = "complete" if report["success"] else "failed"
         write_json(output / "build-report.json", report)
+        export_bundle(output, latest_output)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "dist/community",
-                        help="Output directory within the collection checkout")
+                        help="Latest completed bundle directory within dist/")
     parser.add_argument("--verify-image", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--manifest-output", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()

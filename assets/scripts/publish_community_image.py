@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 
-from community_image import validate_manifest
+from community_image import bundle_lock, validate_manifest
 
 PREFIX = "community-image-"
 ASSETS = ("tf.img", "tf.img.sha256", "content-manifest.json", "build-report.json")
@@ -62,6 +62,11 @@ def notes(report):
 
 
 def publish(directory, repository, run_id):
+    with bundle_lock(directory):
+        return _publish(directory, repository, run_id)
+
+
+def _publish(directory, repository, run_id):
     for asset in ASSETS:
         if not (directory / asset).is_file():
             raise ValueError(f"Missing release asset: {asset}")
