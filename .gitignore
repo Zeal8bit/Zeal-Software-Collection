@@ -7,3 +7,4 @@ hugo.dev.toml
 dist/
 __pycache__/
 .venv/
+tmp/community-image/

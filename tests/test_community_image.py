@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
 from community_image import manifest, validate_manifest, write_json
@@ -73,13 +74,44 @@ class BuilderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             (output / "tf.img").write_bytes(b"old image")
-            with patch.object(builder.shutil, "which", return_value=None):
+            write_json(output / "build-report.json", {"success": True})
+            def missing_tool(tool):
+                # A previous successful report must not survive into a new run.
+                active = json.loads((output / "build-report.json").read_text())
+                self.assertFalse(active["success"])
+                return None
+            with patch.object(builder.shutil, "which", side_effect=missing_tool):
                 with self.assertRaisesRegex(RuntimeError, "Missing prerequisite"):
                     builder.build(output)
             self.assertFalse((output / "tf.img").exists())
             report = json.loads((output / "build-report.json").read_text())
             self.assertFalse(report["success"])
             self.assertIn("Missing prerequisite", report["error"])
+
+    def test_each_invocation_retains_a_unique_project_workspace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "collection.yml").write_text("version: 1\ndependencies: []\n")
+            output = root / "dist/community"
+            workspaces = []
+            fake_yaml = SimpleNamespace(safe_load=lambda text: {"dependencies": []})
+            with patch.object(builder, "ROOT", root), patch.dict(
+                    os.environ, {"CONTAINER_CMD": "docker"}), patch.object(
+                    builder.shutil, "which", return_value="/bin/tool"), patch.dict(
+                    sys.modules, {"yaml": fake_yaml}):
+                for _ in range(2):
+                    with patch.object(builder, "checked", side_effect=[
+                            "", "a" * 40, RuntimeError("clone failed")]):
+                        with self.assertRaisesRegex(RuntimeError, "clone failed"):
+                            builder.build(output)
+                    report = json.loads((output / "build-report.json").read_text())
+                    workspace = Path(report["workspace"])
+                    self.assertEqual(workspace.parent, root / "tmp/community-image")
+                    self.assertTrue((workspace / "state/collection.yml").is_file())
+                    self.assertFalse(report["success"])
+                    workspaces.append(workspace)
+            self.assertNotEqual(*workspaces)
+            self.assertTrue(all(workspace.exists() for workspace in workspaces))
 
     def test_verification_always_unmounts(self):
         calls = []

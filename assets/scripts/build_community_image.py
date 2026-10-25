@@ -145,6 +145,7 @@ def build(output):
         (output / name).unlink(missing_ok=True)
     report = {"version": 1, "success": False, "items": [],
               "started_at": datetime.now(timezone.utc).isoformat()}
+    write_json(output / "build-report.json", report)
     try:
         if not shutil.which("git"):
             raise RuntimeError("Missing prerequisite: git")
@@ -157,71 +158,77 @@ def build(output):
         collection = yaml.safe_load((ROOT / "collection.yml").read_text())
         selected = [d["id"] for d in collection["dependencies"] if d.get("zde") is not False]
         report["collection_commit"] = checked(["git", "rev-parse", "HEAD"]).strip()
-        with tempfile.TemporaryDirectory(prefix="community-image-") as directory:
-            work = Path(directory)
-            checkout, state = work / "zde", work / "state"
-            state.mkdir()
-            shutil.copy2(ROOT / "collection.yml", state / "collection.yml")
-            checked(["git", "clone", "--branch", "main", "--recurse-submodules", ZDE_REPO, checkout])
-            checked([runtime, "pull", IMAGE])
-            report["zde_commit"] = checked(["git", "-C", checkout, "rev-parse", "HEAD"]).strip()
-            image_id = checked([runtime, "image", "inspect", IMAGE, "--format",
-                                "{{index .RepoDigests 0}}"]).strip()
-            report["zde_image"] = image_id
-            env = dict(os.environ, ZDE_PATH=str(checkout), ZDE_USER_PATH=str(state),
-                       ZDE_IMAGE_REF=image_id, ZDE_STRICT_EXIT="1", HOST_CWD=str(ROOT),
-                       CONTAINER_CMD=runtime)
-            def zde(*args):
-                return run([checkout / "zde", *args], env=env, log=output / "build.log")
-            def catalog():
-                result = zde("exec", "python3", "-c", CATALOG_QUERY)
-                if result.returncode:
-                    raise RuntimeError("Unable to read ZDE catalog")
-                payload = next(line.partition("=")[2] for line in result.stdout.splitlines()
-                               if line.startswith("COMMUNITY_CATALOG="))
-                return {d["id"]: d for d in json.loads(payload)}
-            effective = catalog()
-            # Many applications use SDK packages without declaring depends_on.
-            # Make collection libraries available before installing applications.
-            libraries = [dep_id for dep_id in selected
-                         if "library" in [c.casefold() for c in effective[dep_id]["categories"]]]
-            ids = ordered(effective, ["Zeal8bit/Zeal-8-bit-OS",
-                                      "Zeal8bit/Zeal-VideoBoard-SDK",
-                                      *libraries, *selected, "Zeal8bit/ZealFS"])
-            staging = checkout / "mnt" / "tf"
-            if staging.exists():
-                shutil.rmtree(staging)
-            staging.mkdir(parents=True)
-            install_and_stage(ids, effective, zde, staging, report)
-            final_catalog = catalog()
-            for row in report["items"]:
-                row["source"] = final_catalog[row["id"]]["revision"]
-            tools_failed = any(r["id"] == "Zeal8bit/ZealFS" and r["status"] == "failed"
-                               for r in report["items"])
-            if tools_failed or not final_catalog["Zeal8bit/ZealFS"]["installed"]:
-                raise RuntimeError("ZealFS image tools failed to install")
-            content, excluded = manifest(staging)
-            report["excluded_names"] = excluded
-            if (not any(row["status"] == "included" for row in report["items"])
-                    or not any(entry["type"] == "file" for entry in content["entries"])):
-                raise RuntimeError("No software was successfully staged")
-            if zde("image", "tf", "create", "--yes", "65536").returncode:
-                raise RuntimeError("TF image creation failed")
-            # /src is the collection checkout in ZDE's standard Compose configuration.
-            relative = output.relative_to(ROOT)
-            verified = output / "verified.json"
-            if zde("exec", "sudo", "python3", "/src/assets/scripts/build_community_image.py",
-                   "--verify-image", "/mnt/tf.img", "--manifest-output",
-                   str(Path("/src") / relative / "verified.json")).returncode:
-                raise RuntimeError("TF image verification failed")
-            if json.loads(verified.read_text()) != content:
-                raise RuntimeError("TF image contents differ from staging manifest")
-            verified.unlink()
-            shutil.copyfile(checkout / "mnt" / "tf.img", output / "tf.img")
-            write_json(output / "content-manifest.json", content)
-            digest = hashlib.sha256((output / "tf.img").read_bytes()).hexdigest()
-            (output / "tf.img.sha256").write_text(f"{digest}  tf.img\n")
-            report["success"] = True
+        workspace_root = ROOT / "tmp" / "community-image"
+        workspace_root.mkdir(parents=True, exist_ok=True)
+        work = Path(tempfile.mkdtemp(
+            prefix=datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-"),
+            dir=workspace_root))
+        report["workspace"] = str(work)
+        print(f"Workspace: {work}", flush=True)
+        write_json(output / "build-report.json", report)
+        checkout, state = work / "zde", work / "state"
+        state.mkdir()
+        shutil.copy2(ROOT / "collection.yml", state / "collection.yml")
+        checked(["git", "clone", "--branch", "main", "--recurse-submodules", ZDE_REPO, checkout])
+        checked([runtime, "pull", IMAGE])
+        report["zde_commit"] = checked(["git", "-C", checkout, "rev-parse", "HEAD"]).strip()
+        image_id = checked([runtime, "image", "inspect", IMAGE, "--format",
+                            "{{index .RepoDigests 0}}"]).strip()
+        report["zde_image"] = image_id
+        env = dict(os.environ, ZDE_PATH=str(checkout), ZDE_USER_PATH=str(state),
+                   ZDE_IMAGE_REF=image_id, ZDE_STRICT_EXIT="1", HOST_CWD=str(ROOT),
+                   CONTAINER_CMD=runtime)
+        def zde(*args):
+            return run([checkout / "zde", *args], env=env, log=output / "build.log")
+        def catalog():
+            result = zde("exec", "python3", "-c", CATALOG_QUERY)
+            if result.returncode:
+                raise RuntimeError("Unable to read ZDE catalog")
+            payload = next(line.partition("=")[2] for line in result.stdout.splitlines()
+                           if line.startswith("COMMUNITY_CATALOG="))
+            return {d["id"]: d for d in json.loads(payload)}
+        effective = catalog()
+        # Many applications use SDK packages without declaring depends_on.
+        # Make collection libraries available before installing applications.
+        libraries = [dep_id for dep_id in selected
+                     if "library" in [c.casefold() for c in effective[dep_id]["categories"]]]
+        ids = ordered(effective, ["Zeal8bit/Zeal-8-bit-OS",
+                                  "Zeal8bit/Zeal-VideoBoard-SDK",
+                                  *libraries, *selected, "Zeal8bit/ZealFS"])
+        staging = checkout / "mnt" / "tf"
+        if staging.exists():
+            shutil.rmtree(staging)
+        staging.mkdir(parents=True)
+        install_and_stage(ids, effective, zde, staging, report)
+        final_catalog = catalog()
+        for row in report["items"]:
+            row["source"] = final_catalog[row["id"]]["revision"]
+        tools_failed = any(r["id"] == "Zeal8bit/ZealFS" and r["status"] == "failed"
+                           for r in report["items"])
+        if tools_failed or not final_catalog["Zeal8bit/ZealFS"]["installed"]:
+            raise RuntimeError("ZealFS image tools failed to install")
+        content, excluded = manifest(staging)
+        report["excluded_names"] = excluded
+        if (not any(row["status"] == "included" for row in report["items"])
+                or not any(entry["type"] == "file" for entry in content["entries"])):
+            raise RuntimeError("No software was successfully staged")
+        if zde("image", "tf", "create", "--yes", "65536").returncode:
+            raise RuntimeError("TF image creation failed")
+        # /src is the collection checkout in ZDE's standard Compose configuration.
+        relative = output.relative_to(ROOT)
+        verified = output / "verified.json"
+        if zde("exec", "sudo", "python3", "/src/assets/scripts/build_community_image.py",
+               "--verify-image", "/mnt/tf.img", "--manifest-output",
+               str(Path("/src") / relative / "verified.json")).returncode:
+            raise RuntimeError("TF image verification failed")
+        if json.loads(verified.read_text()) != content:
+            raise RuntimeError("TF image contents differ from staging manifest")
+        verified.unlink()
+        shutil.copyfile(checkout / "mnt" / "tf.img", output / "tf.img")
+        write_json(output / "content-manifest.json", content)
+        digest = hashlib.sha256((output / "tf.img").read_bytes()).hexdigest()
+        (output / "tf.img.sha256").write_text(f"{digest}  tf.img\n")
+        report["success"] = True
     except Exception as exc:
         report["error"] = str(exc)
         raise
