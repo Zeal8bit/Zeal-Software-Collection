@@ -360,6 +360,28 @@ dependencies:
     aliases:
       - zepto
 
+  - id: zoul0813/zeal-ed
+    repo: https://github.com/zoul0813/zeal-ed.git
+    build:
+      tool: cmake
+      artifacts:
+        - bin/ed
+      root: /apps
+    depends_on:
+      - zoul0813/zeal-coreutils
+    metadata:
+      name: Zeal Ed
+      category:
+        - software
+      description: Line-oriented ed text editor for Zeal 8-bit OS
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+      flags:
+        - work_in_progress
+    aliases:
+      - ed
+
   - id: zoul0813/zeal-piano
     repo: https://github.com/zoul0813/zeal-piano.git
     metadata:

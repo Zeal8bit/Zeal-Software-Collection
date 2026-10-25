@@ -20,6 +20,9 @@ Projects marked with:
 * [Video Poker](https://github.com/harlock74/zeal-videopoker.git) by [@arcadia6502](https://github.com/harlock74): Video poker-inspired game for Zeal 8-bit Computer
 * [Couples](https://github.com/harlock74/zeal-couples.git) by [@arcadia6502](https://github.com/harlock74): Poker cards memory-inspired game for Zeal 8-bit Computer
 * [Solitaire](https://github.com/harlock74/zeal-solitaire.git) by [@arcadia6502](https://github.com/harlock74): Solitaire-inspired game for Zeal 8-bit Computer
+* [zealmine](https://github.com/CaPusto/zealmine.git) by [@CaPusto](https://github.com/CaPusto): Minesweeper for Zeal 8-bit Computer
+* [Checkers](https://github.com/harlock74/zeal-checkers.git) by [@arcadia6502](https://github.com/harlock74): Checkers for Zeal 8-bit Computer
+* [Minigolf](https://github.com/harlock74/zeal-minigolf.git) by [@arcadia6502](https://github.com/harlock74): Mini-golf for Zeal 8-bit Computer
 
 ## 💾 Demo
 * [Zeal Boing](https://github.com/zoul0813/zeal-boing.git) by [@zoul0813](https://github.com/zoul0813): Boing Ball-inspired demo for Zeal 8-bit Computer
@@ -30,6 +33,7 @@ Projects marked with:
 ## 💻 Software
 * [ZShell](https://github.com/zoul0813/zeal-zshell.git) by [@zoul0813](https://github.com/zoul0813): Shell for Zeal 8-bit OS with history and batch processing
 * [Zepto](https://github.com/Zeal8bit/Zepto.git) by [@Zeal8bit](https://github.com/Zeal8bit): Nano-inspired text editor written in Z80 assembly
+* [Zeal Ed](https://github.com/zoul0813/zeal-ed.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: Line-oriented ed text editor for Zeal 8-bit OS
 * [Zeal Piano](https://github.com/zoul0813/zeal-piano.git) by [@zoul0813](https://github.com/zoul0813): Playable piano for Zeal 8-bit Computer
 * [Zeal QR](https://github.com/zoul0813/zeal-qr.git) by [@zoul0813](https://github.com/zoul0813): QR Code generator for Zeal 8-bit Computer
 * [Zeal Music Tracker](https://github.com/zoul0813/zeal-music-tracker.git) by [@zoul0813](https://github.com/zoul0813): Music tracker for Zeal 8-bit Computer
