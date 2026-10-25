@@ -23,6 +23,10 @@ dependencies:
   # Games
   - id: zoul0813/zeal-zfighter
     repo: https://github.com/zoul0813/zeal-zfighter.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/zfighter.png
       name: Z Fighter
@@ -37,6 +41,10 @@ dependencies:
 
   - id: zoul0813/zeal-microbe
     repo: https://github.com/zoul0813/zeal-microbe.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-archiver
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/microbe.png
       name: Microbe
@@ -51,6 +59,10 @@ dependencies:
 
   - id: zoul0813/zeal-bricked
     repo: https://github.com/zoul0813/zeal-bricked.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/bricked.png
       name: Bricked
@@ -112,6 +124,9 @@ dependencies:
 
   - id: zoul0813/zeal-closure
     repo: https://github.com/zoul0813/zeal-closure.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/closure.png
       name: Closure
@@ -126,6 +141,8 @@ dependencies:
 
   - id: Zeal8bit/Zeal-Chip8
     repo: https://github.com/Zeal8bit/Zeal-Chip8.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/chip8.png
       name: CHIP-8
@@ -142,6 +159,10 @@ dependencies:
 
   - id: harlock74/zeal-pongy
     repo: https://github.com/harlock74/zeal-pongy.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       name: Pongy
       category:
@@ -161,6 +182,10 @@ dependencies:
         - bin/zpoker
         - bin/assets
       root: /games/poker
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-videopoker/main/docs/screenshots/2.png
       name: Video Poker
@@ -181,6 +206,10 @@ dependencies:
         - bin/zcouples
         - bin/assets
       root: /games/couples
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-couples/main/docs/screenshots/2.png
       name: Couples
@@ -201,6 +230,10 @@ dependencies:
         - bin/zsol
         - bin/assets
       root: /games/solitaire
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-solitaire/main/docs/screenshots/2.png
       name: Solitaire
@@ -216,6 +249,10 @@ dependencies:
 
   - id: CaPusto/zealmine
     repo: https://github.com/CaPusto/zealmine.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://raw.githubusercontent.com/CaPusto/zealmine/main/docs/screenshot_title.png
       name: zealmine
@@ -251,6 +288,10 @@ dependencies:
         - bin/zcheckers
         - bin/assets
       root: /games/checkers
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       name: Checkers
       category:
@@ -269,6 +310,10 @@ dependencies:
       artifacts:
         - bin/zgolf
       root: /games
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       name: Minigolf
       category:
@@ -284,6 +329,8 @@ dependencies:
   # Demos
   - id: zoul0813/zeal-boing
     repo: https://github.com/zoul0813/zeal-boing.git
+    depends_on:
+      - zoul0813/zeal-game-dev-kit
     metadata:
       video: https://zeal8bit.com/data/sc-shots/boing.webm
       name: Zeal Boing
@@ -313,6 +360,8 @@ dependencies:
   - id: zoul0813/zeal-matrix
     repo: https://github.com/zoul0813/zeal-matrix.git
     tag: v1.0.0
+    depends_on:
+      - zoul0813/zeal-game-dev-kit
     metadata:
       video: https://zeal8bit.com/data/sc-shots/matrix.webm
       name: Zeal Matrix
@@ -327,6 +376,8 @@ dependencies:
 
   - id: zoul0813/zeal-truchet
     repo: https://github.com/zoul0813/zeal-truchet.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
     metadata:
       video: https://zeal8bit.com/data/sc-shots/truchet.webm
       name: Zeal Truchet
@@ -348,6 +399,7 @@ dependencies:
         - bin/
       root: /apps
     depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/zshell.png
@@ -399,6 +451,9 @@ dependencies:
 
   - id: zoul0813/zeal-piano
     repo: https://github.com/zoul0813/zeal-piano.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/piano.png
       name: Zeal Piano
@@ -427,6 +482,9 @@ dependencies:
 
   - id: zoul0813/zeal-music-tracker
     repo: https://github.com/zoul0813/zeal-music-tracker.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/zmt.png
       name: Zeal Music Tracker
@@ -442,6 +500,9 @@ dependencies:
 
   - id: zoul0813/zeal-commander
     repo: https://github.com/zoul0813/zeal-commander.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/commander.png
       name: Zeal Commander
@@ -523,6 +584,9 @@ dependencies:
 
   - id: zoul0813/zeal-cc
     repo: https://github.com/zoul0813/zeal-cc.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
     metadata:
       name: Zeal CC
       category:
@@ -631,6 +695,7 @@ dependencies:
     repo: https://github.com/zoul0813/zeal-game-dev-kit.git
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
     metadata:
       name: Zeal Game Dev Kit
       category:
@@ -690,6 +755,8 @@ dependencies:
 
   - id: zoul0813/zeal-archiver
     repo: https://github.com/zoul0813/zeal-archiver.git
+    depends_on:
+      - zoul0813/zeal-coreutils
     metadata:
       name: Zeal Archiver
       category:
