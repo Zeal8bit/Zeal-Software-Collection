@@ -229,6 +229,21 @@ dependencies:
       - zealmine
       - minesweeper
 
+  - id: CaPusto/zeal-tetris
+    repo: https://github.com/CaPusto/zeal-tetris.git
+    metadata:
+      screenshot: https://raw.githubusercontent.com/CaPusto/zeal-tetris/main/docs/screenshot.png
+      name: zeal-tetris
+      category:
+        - game
+      description: TETRIS for the Zeal 8-bit Computer
+      author:
+        name: CaPusto
+        link: https://github.com/CaPusto
+    aliases:
+      - zeal-tetris
+      - tetris
+
   - id: harlock74/zeal-checkers
     repo: https://github.com/harlock74/zeal-checkers.git
     build:
