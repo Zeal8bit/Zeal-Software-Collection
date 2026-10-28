@@ -13,7 +13,7 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 
-from community_image import conflicts, export_bundle, manifest, write_json
+from community_image import bundle_lock, conflicts, export_bundle, manifest, write_downloads, write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
@@ -38,7 +38,10 @@ def run(args, *, cwd=ROOT, env=None, log=None):
     output = []
     with (log.open("a") if log else open(os.devnull, "w")) as stream:
         stream.write("+ " + " ".join(map(str, args)) + "\n")
+        # These commands are noninteractive. Inheriting the terminal lets Compose
+        # change its output mode, causing streamed newlines to form a staircase.
         with subprocess.Popen(list(map(str, args)), cwd=cwd, env=env,
+                              stdin=subprocess.DEVNULL,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True) as process:
             for line in process.stdout:
@@ -229,6 +232,7 @@ def build(latest_output):
         write_json(output / "content-manifest.json", content)
         digest = hashlib.sha256((output / "tf.img").read_bytes()).hexdigest()
         (output / "tf.img.sha256").write_text(f"{digest}  tf.img\n")
+        write_downloads(output, report)
         report["success"] = True
     except Exception as exc:
         report["error"] = str(exc)
@@ -239,10 +243,52 @@ def build(latest_output):
         export_bundle(output, latest_output)
 
 
+def retry_app(latest_output: Path, app_id: str):
+    """Test one app against the retained environment without changing the image bundle."""
+    with bundle_lock(latest_output):
+        report_path = latest_output / "build-report.json"
+        if not report_path.is_file():
+            raise ValueError("No previous build found; run the builder without --retry first")
+        report = json.loads(report_path.read_text())
+    work = Path(report["workspace"]).resolve()
+    work.relative_to((ROOT / "tmp/community-image").resolve())
+    checkout, state = work / "zde", work / "state"
+    if not (checkout / "zde").is_file() or not state.is_dir():
+        raise ValueError(f"Retained build workspace is missing: {work}")
+    runtime = os.environ.get("CONTAINER_CMD") or next(
+        (tool for tool in ("docker", "podman") if shutil.which(tool)), None)
+    if runtime not in {"docker", "podman"} or not shutil.which(runtime):
+        raise RuntimeError("Missing prerequisite: Docker or Podman")
+    env = dict(os.environ, ZDE_PATH=str(checkout), ZDE_USER_PATH=str(state),
+               ZDE_IMAGE_REF=report["zde_image"], ZDE_STRICT_EXIT="1",
+               HOST_CWD=str(ROOT), CONTAINER_CMD=runtime)
+    retries = work / "retries"
+    retries.mkdir(exist_ok=True)
+    attempt = Path(tempfile.mkdtemp(
+        prefix=datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-"), dir=retries))
+    print(f"Retry workspace: {work}\nRetry log: {attempt / 'build.log'}", flush=True)
+    result = {"id": app_id, "success": False, "stage": "install"}
+    try:
+        # ZDE owns alias resolution, configured refs, and dependency installation.
+        for stage in ("install", "build"):
+            result["stage"] = stage
+            checked([checkout / "zde", "deps", stage, app_id], env=env,
+                    log=attempt / "build.log")
+        result["success"] = True
+        print(f"Successfully installed and built {app_id}. Image bundle unchanged.")
+    except Exception as exc:
+        result["error"] = str(exc)
+        raise
+    finally:
+        write_json(attempt / "report.json", result)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "dist/community",
                         help="Latest completed bundle directory within dist/")
+    parser.add_argument("--retry", metavar="APP",
+                        help="Update and rebuild one app in the last build workspace; no image creation")
     parser.add_argument("--verify-image", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--manifest-output", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -252,7 +298,10 @@ def main():
         else:
             output = args.output.resolve()
             output.relative_to(ROOT / "dist")
-            build(output)
+            if args.retry:
+                retry_app(output, args.retry)
+            else:
+                build(output)
     except Exception as exc:
         print(f"Community image build failed: {exc}", file=sys.stderr)
         return 1

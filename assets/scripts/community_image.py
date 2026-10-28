@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 
 
@@ -25,8 +26,8 @@ def write_json(path: Path, value: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-BUNDLE_FILES = ("tf.img", "tf.img.sha256", "content-manifest.json", "build.log",
-                "build-report.json")
+BUNDLE_FILES = ("tf.img", "tf.img.sha256", "tf.img.zip", "README.md",
+                "content-manifest.json", "build.log", "build-report.json")
 
 
 @contextmanager
@@ -115,3 +116,32 @@ def validate_manifest(value: dict) -> dict:
 def conflicts(before: dict, after: dict) -> list[str]:
     current = {e["path"]: e for e in after["entries"]}
     return [e["path"] for e in before["entries"] if current.get(e["path"]) != e]
+
+
+def notes(report):
+    lines = ["Community TF image built from collection commit `" + report["collection_commit"] + "`.",
+             "", "### Included software", ""]
+    lines.extend("- " + row["id"] for row in report["items"] if row["status"] == "included")
+    lines.extend(["", "### Not included — failed items", ""])
+    failed = [r for r in report["items"] if r["status"] == "failed"]
+    lines.extend("- " + r["id"] + " (" + r["stage"] + "): " + r["reason"] for r in failed)
+    if not failed:
+        lines.append("None.")
+    skipped = [r for r in report["items"] if r["status"] == "skipped"]
+    if skipped:
+        lines.extend(["", "### Skipped items", ""])
+        lines.extend("- " + r["id"] + ": " + r["reason"] for r in skipped)
+    if report.get("excluded_names"):
+        lines.extend(["", "### Names excluded by ZealFS's 16-byte limit", ""])
+        lines.extend("- `" + name + "`" for name in report["excluded_names"])
+    lines.extend(["", "See the attached build report for source revisions and build details."])
+    return "\n".join(lines) + "\n"
+
+
+def write_downloads(directory: Path, report: dict) -> None:
+    """Package the verified image and describe the same build locally and on GitHub."""
+    with zipfile.ZipFile(directory / "tf.img.zip", "w",
+                         compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        for name in ("tf.img", "tf.img.sha256"):
+            archive.write(directory / name, arcname=name)
+    (directory / "README.md").write_text(notes(report))

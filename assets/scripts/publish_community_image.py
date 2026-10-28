@@ -16,10 +16,10 @@ import subprocess
 import sys
 import tempfile
 
-from community_image import bundle_lock, validate_manifest
+from community_image import bundle_lock, notes, validate_manifest
 
 PREFIX = "community-image-"
-ASSETS = ("tf.img", "tf.img.sha256", "content-manifest.json", "build-report.json")
+ASSETS = ("tf.img", "tf.img.sha256", "tf.img.zip", "content-manifest.json", "build-report.json")
 
 
 def gh(*args):
@@ -39,26 +39,6 @@ def changed(current, baseline):
         return True
     validate_manifest(baseline)
     return current["sha256"] != baseline["sha256"]
-
-
-def notes(report):
-    lines = ["Community TF image built from collection commit `" + report["collection_commit"] + "`.",
-             "", "### Included software", ""]
-    lines.extend("- " + row["id"] for row in report["items"] if row["status"] == "included")
-    lines.extend(["", "### Not included — failed items", ""])
-    failed = [r for r in report["items"] if r["status"] == "failed"]
-    lines.extend("- " + r["id"] + " (" + r["stage"] + "): " + r["reason"] for r in failed)
-    if not failed:
-        lines.append("None.")
-    skipped = [r for r in report["items"] if r["status"] == "skipped"]
-    if skipped:
-        lines.extend(["", "### Skipped items", ""])
-        lines.extend("- " + r["id"] + ": " + r["reason"] for r in skipped)
-    if report.get("excluded_names"):
-        lines.extend(["", "### Names excluded by ZealFS's 16-byte limit", ""])
-        lines.extend("- `" + name + "`" for name in report["excluded_names"])
-    lines.extend(["", "See the attached build report for source revisions and build details."])
-    return "\n".join(lines) + "\n"
 
 
 def publish(directory, repository, run_id):
