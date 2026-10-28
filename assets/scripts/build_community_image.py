@@ -123,6 +123,9 @@ def install_and_stage(ids, catalog, zde, staging, report, report_path):
             visible, excluded = manifest(staging)
             previous, _ = manifest(backup)
             row["excluded_names"] = excluded
+            previous_paths = {entry["path"] for entry in previous["entries"]}
+            row["files"] = [entry["path"] for entry in visible["entries"]
+                            if entry["type"] == "file" and entry["path"] not in previous_paths]
             if visible == previous:
                 row.update(status="skipped", reason="No additional image-visible files")
             else:
@@ -230,6 +233,8 @@ def build(latest_output):
         verified.unlink()
         shutil.copyfile(checkout / "mnt" / "tf.img", output / "tf.img")
         write_json(output / "content-manifest.json", content)
+        report["tf_contents"] = [{"path": entry["path"], "type": entry["type"]}
+                                 for entry in content["entries"]]
         digest = hashlib.sha256((output / "tf.img").read_bytes()).hexdigest()
         (output / "tf.img.sha256").write_text(f"{digest}  tf.img\n")
         write_downloads(output, report)
