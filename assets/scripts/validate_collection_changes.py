@@ -11,7 +11,7 @@ import tempfile
 
 import yaml
 
-from build_community_image import CATALOG_QUERY, IMAGE, ROOT, ZDE_REPO, checked, run
+from build_community_image import CATALOG_QUERY, IMAGE, ROOT, ZDE_REPO, checked, configure_staging, run
 
 
 def entries(document):
@@ -70,6 +70,7 @@ def validate(base_ref, jobs):
             def zde(*args):
                 return run([checkout / "zde", "--no-tty", *args], env=env)
             print(f"Validating {dep_id}", flush=True)
+            configure_staging(zde)
             catalog = zde("exec", "python3", "-c", CATALOG_QUERY)
             if catalog.returncode:
                 return dep_id, "could not read ZDE catalog"

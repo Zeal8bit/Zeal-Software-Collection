@@ -148,6 +148,9 @@ dependencies:
 
   - id: Zeal8bit/Zeal-Chip8
     repo: https://github.com/Zeal8bit/Zeal-Chip8.git
+    build:
+      artifacts:
+        - bin/chip8.bin
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
     metadata:
@@ -421,6 +424,9 @@ dependencies:
 
   - id: Zeal8bit/Zepto
     repo: https://github.com/Zeal8bit/Zepto.git
+    build:
+      artifacts:
+        - bin/zepto.bin
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/zepto.png
       name: Zepto

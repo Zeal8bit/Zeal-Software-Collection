@@ -253,6 +253,16 @@ class BuilderTests(unittest.TestCase):
                 builder.verify_image(Path("/mnt/tf.img"), Path("unused"))
         self.assertEqual(calls[-1][:2], ["sudo", "umount"])
 
+    def test_configure_staging_requires_rename_setting(self):
+        calls = []
+        def zde(*args):
+            calls.append(args)
+            return subprocess.CompletedProcess(args, 0)
+        builder.configure_staging(zde)
+        self.assertEqual(calls, [("config", "set", "deps.rename-bins", "on")])
+        with self.assertRaisesRegex(RuntimeError, "configure ZDE"):
+            builder.configure_staging(lambda *args: subprocess.CompletedProcess(args, 1))
+
     def test_order_and_cycles(self):
         catalog = {"app": {"parents": ["lib"]}, "lib": {"parents": []}}
         self.assertEqual(ordered(catalog, ["app", "lib"]), ["lib", "app"])
