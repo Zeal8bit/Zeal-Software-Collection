@@ -67,7 +67,7 @@ exported to `dist/community/` by default:
 - `tf.img`: verified 64 MiB ZealFS v2 TF image with an MBR.
 - `tf.img.sha256`: image checksum; run `sha256sum -c tf.img.sha256` from this directory.
 - `tf.img.zip`: compressed download containing `tf.img` and `tf.img.sha256`.
-- `README.md`: the same build description used for GitHub releases, including included, failed, and skipped software.
+- `README.md`: the same build description used for GitHub releases, including each project’s newly added TF files, the verified TF directory tree, and failed and skipped software.
 - `content-manifest.json`: sorted image-visible paths, directory entries, file sizes,
   and SHA-256 hashes, with a combined content fingerprint.
 - `build-report.json`: live install/staging progress, included, failed, and skipped

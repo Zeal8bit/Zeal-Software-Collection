@@ -296,6 +296,9 @@ class BuilderTests(unittest.TestCase):
             self.assertTrue((staging / "last").exists())
             self.assertEqual([r["status"] for r in report["items"]],
                              ["failed", "failed", "included", "failed", "failed", "included", "skipped"])
+            self.assertEqual(report["items"][2]["files"], ["app"])
+            self.assertEqual(report["items"][5]["files"], ["last"])
+            self.assertNotIn("files", report["items"][4])
 
 
 class ReleaseTests(unittest.TestCase):
@@ -309,6 +312,19 @@ class ReleaseTests(unittest.TestCase):
             "items": [{"id": "good", "status": "included"},
                       {"id": "broken", "status": "failed", "stage": "install", "reason": "failed"}]})
         write_downloads(directory, json.loads((directory / "build-report.json").read_text()))
+
+    def test_notes_show_project_files_and_verified_tree(self):
+        report = {"collection_commit": "abc", "items": [
+            {"id": "coreutils", "status": "included", "files": ["bin/cat", "bin/ls"]},
+            {"id": "game", "status": "included", "files": ["games/game"]}],
+            "tf_contents": [{"path": "bin", "type": "directory"},
+                            {"path": "bin/cat", "type": "file"},
+                            {"path": "bin/ls", "type": "file"},
+                            {"path": "games", "type": "directory"},
+                            {"path": "games/game", "type": "file"}]}
+        description = publisher.notes(report)
+        self.assertIn("| coreutils | `t:/bin/cat`<br>`t:/bin/ls` |", description)
+        self.assertIn("t:/\n├── bin\n│   ├── cat\n│   └── ls\n└── games\n    └── game", description)
 
     def test_release_filter(self):
         releases = [

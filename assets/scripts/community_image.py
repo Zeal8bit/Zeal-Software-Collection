@@ -118,10 +118,41 @@ def conflicts(before: dict, after: dict) -> list[str]:
     return [e["path"] for e in before["entries"] if current.get(e["path"]) != e]
 
 
+def tf_tree(entries):
+    """Render the verified image paths without depending on the host tree command."""
+    children = {}
+    for entry in entries:
+        parent, _, name = entry["path"].rpartition("/")
+        children.setdefault(parent, []).append((name, entry["type"]))
+    lines = ["t:/"]
+
+    def visit(parent, prefix):
+        nodes = sorted(children.get(parent, []))
+        for index, (name, kind) in enumerate(nodes):
+            last = index == len(nodes) - 1
+            lines.append(prefix + ("└── " if last else "├── ") + name)
+            if kind == "directory":
+                path = f"{parent}/{name}" if parent else name
+                visit(path, prefix + ("    " if last else "│   "))
+
+    visit("", "")
+    return "\n".join(lines)
+
+
 def notes(report):
     lines = ["Community TF image built from collection commit `" + report["collection_commit"] + "`.",
              "", "### Included software", ""]
-    lines.extend("- " + row["id"] for row in report["items"] if row["status"] == "included")
+    lines.extend(["Files are listed at their TF image locations; only files newly added by each project are attributed to it.",
+                  "", "| Software | Installed files (TF) |", "| --- | --- |"])
+    for row in report["items"]:
+        if row["status"] != "included":
+            continue
+        name = row["id"].replace("|", "\\|")
+        files = row.get("files")
+        paths = "<br>".join("`t:/" + path.replace("|", "\\|") + "`" for path in files) if files else "—"
+        lines.append(f"| {name} | {paths} |")
+    if "tf_contents" in report:
+        lines.extend(["", "### TF image tree", "", "```text", tf_tree(report["tf_contents"]), "```"])
     lines.extend(["", "### Not included — failed items", ""])
     failed = [r for r in report["items"] if r["status"] == "failed"]
     lines.extend("- " + r["id"] + " (" + r["stage"] + "): " + r["reason"] for r in failed)
