@@ -98,7 +98,10 @@ Individual failures do not stop attempts for the remaining items. A dependent
 whose prerequisite failed is not included, even if its repository exists on disk.
 ZDE installs/builds fresh dependencies; no previous build cache is reused.
 
-Successful installs are staged individually using `zde deps stage tf <id>`.
+Successful installs are staged individually using `zde deps stage tf <id>`. The
+isolated ZDE configuration enables `deps.rename-bins`, removing the `.bin`
+extension from individually staged binary artifacts. The PR validation check
+uses the same setting.
 Intentionally disabled staging is recorded as skipped. Failed staging is rolled
 back, including partial copies. An item that overwrites a previously staged path
 with different contents is rejected and rolled back; identical shared files are

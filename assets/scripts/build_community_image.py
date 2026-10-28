@@ -60,6 +60,11 @@ def checked(args, **kwargs):
     return result.stdout
 
 
+def configure_staging(zde):
+    if zde("config", "set", "deps.rename-bins", "on").returncode:
+        raise RuntimeError("Unable to configure ZDE to rename staged .bin files")
+
+
 def ordered(catalog, selected):
     result, visiting, visited = [], set(), set()
     def visit(dep_id):
@@ -199,6 +204,7 @@ def build(latest_output):
             payload = next(line.partition("=")[2] for line in result.stdout.splitlines()
                            if line.startswith("COMMUNITY_CATALOG="))
             return {d["id"]: d for d in json.loads(payload)}
+        configure_staging(zde)
         effective = catalog()
         required = [dep["id"] for dep in effective.values() if dep["required"]]
         ids = ordered(effective, required + selected + ["Zeal8bit/ZealFS"])
