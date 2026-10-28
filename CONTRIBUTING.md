@@ -199,8 +199,8 @@ The local builder requires no GitHub credentials.
 When adding or updating an installable project, inspect its build files and declare
 all direct SDK and library prerequisites in `depends_on`. The OS is installed
 as a required ZDE dependency and needs no per-project declaration. A dependency already installed in your
-normal ZDE environment can hide a missing declaration; use the isolated community
-builder to check fresh installs. Set explicit `build.artifacts` when outputs live
+normal ZDE environment can hide a missing declaration; the pull request check
+installs changed projects in separate fresh environments to help catch these errors. Set explicit `build.artifacts` when outputs live
 outside the inferred `bin/` or `build/` paths or include companion data files.
 
 See [COLLECTION_AUDIT.md](COLLECTION_AUDIT.md) for the current dependency audit,

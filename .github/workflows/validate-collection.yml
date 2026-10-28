@@ -1,0 +1,35 @@
+name: Validate collection changes
+
+on:
+  pull_request:
+    paths:
+      - collection.yml
+      - assets/scripts/validate_collection_changes.py
+      - assets/scripts/build_community_image.py
+      - assets/scripts/community_image.py
+      - tests/**
+      - .github/workflows/validate-collection.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install prerequisites
+        run: python3 -m pip install 'PyYAML==6.0.3'
+      - name: Test collection and builder
+        run: python3 -m unittest discover -s tests -v
+      - name: Build and stage changed entries in isolation
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 assets/scripts/validate_collection_changes.py --base "$BASE_SHA"

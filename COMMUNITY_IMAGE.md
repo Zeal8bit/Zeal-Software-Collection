@@ -124,6 +124,15 @@ A build report is written on failure; logs are retained once ZDE commands begin.
 
 ## GitHub automation
 
+Pull requests changing the collection run a separate check that compares entries
+with the PR base revision. New and modified ZDE-buildable entries are installed
+and staged in separate fresh ZDE environments, with up to four checked in
+parallel. Each environment includes ZDE-required dependencies and the entry's
+declared dependency chain. Entries marked `zde: false` or `build: false` are
+skipped; removals require no build. The check does not create a TF image. It
+can catch missing dependencies when the build exercises them, but dependencies
+in ZDE's required baseline are always present. Its output is in the Actions log.
+
 `.github/workflows/community-image.yml` runs the same builder on every push to
 `main`, nightly at **07:17 UTC**, and through **Run workflow** in GitHub Actions.
 Workflow runs are serialized. Reports and logs are retained as workflow artifacts
