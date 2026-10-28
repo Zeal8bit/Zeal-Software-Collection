@@ -366,7 +366,6 @@ dependencies:
 
   - id: zoul0813/zeal-matrix
     repo: https://github.com/zoul0813/zeal-matrix.git
-    tag: v1.0.0
     depends_on:
       - zoul0813/zeal-game-dev-kit
     metadata:

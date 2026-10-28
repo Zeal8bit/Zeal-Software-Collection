@@ -8,11 +8,12 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
-from community_image import bundle_lock, export_bundle, manifest, validate_manifest, write_json
+from community_image import bundle_lock, export_bundle, manifest, validate_manifest, write_downloads, write_json
 from build_community_image import install_and_stage, ordered
 import build_community_image as builder
 import publish_community_image as publisher
@@ -70,6 +71,26 @@ class ContentTests(unittest.TestCase):
 
 
 class BundleTests(unittest.TestCase):
+    def test_download_archive_and_local_release_description(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "contents").mkdir()
+            ReleaseTests().assets(directory)
+            with zipfile.ZipFile(directory / "tf.img.zip") as archive:
+                self.assertEqual(archive.namelist(), ["tf.img", "tf.img.sha256"])
+                self.assertIsNone(archive.testzip())
+                for name in archive.namelist():
+                    self.assertEqual(archive.read(name), (directory / name).read_bytes())
+                    self.assertEqual(archive.getinfo(name).compress_type, zipfile.ZIP_DEFLATED)
+            report = json.loads((directory / "build-report.json").read_text())
+            description = (directory / "README.md").read_text()
+            self.assertEqual(description, publisher.notes(report))
+            self.assertIn("broken (install): failed", description)
+            latest = directory / "latest"
+            export_bundle(directory, latest)
+            self.assertEqual((latest / "tf.img.zip").read_bytes(), (directory / "tf.img.zip").read_bytes())
+            self.assertEqual((latest / "README.md").read_text(), description)
+
     def test_export_waits_for_readers_and_keeps_runs_separate(self):
         import threading
         with tempfile.TemporaryDirectory() as temporary:
@@ -101,6 +122,78 @@ class BundleTests(unittest.TestCase):
 
 
 class BuilderTests(unittest.TestCase):
+    def test_streamed_commands_cannot_change_the_callers_terminal(self):
+        import pty
+        import termios
+        master, terminal = pty.openpty()
+        try:
+            original = termios.tcgetattr(terminal)
+            # Model Compose switching an inherited input terminal to raw output.
+            child = ("import os,termios; "
+                     "t=termios.tcgetattr(0) if os.isatty(0) else None; "
+                     "exec('if t is not None:\\n t[1] &= ~termios.OPOST; "
+                     "termios.tcsetattr(0, termios.TCSANOW, t)'); "
+                     "print('first'); print('second')")
+            wrapper = ("import sys; import build_community_image as b; "
+                       "r=b.run([sys.executable, '-c', sys.argv[1]]); "
+                       "assert r.returncode == 0; "
+                       "assert r.stdout == 'first\\nsecond\\n'")
+            env = dict(os.environ, PYTHONPATH=str(Path(builder.__file__).parent))
+            completed = subprocess.run([sys.executable, "-c", wrapper, child],
+                                       stdin=terminal, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE, env=env, timeout=10)
+            self.assertEqual(completed.returncode, 0, completed.stderr.decode())
+            self.assertEqual(termios.tcgetattr(terminal), original)
+        finally:
+            os.close(terminal)
+            os.close(master)
+
+    def test_retry_uses_last_workspace_and_preserves_bundle(self):
+        for failing_stage in (None, "install", "build"):
+            with self.subTest(failing_stage=failing_stage), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                output = root / "dist/community"
+                work = (root / "tmp/community-image/previous-run").resolve()
+                (work / "zde").mkdir(parents=True)
+                (work / "zde/zde").touch()
+                (work / "state").mkdir()
+                output.mkdir(parents=True)
+                original = {"workspace": str(work), "zde_image": "image@sha256:pinned"}
+                write_json(output / "build-report.json", original)
+                (output / "tf.img").write_bytes(b"original image")
+                calls = []
+                def checked(args, **kwargs):
+                    calls.append((args, kwargs))
+                    if args[2] == failing_stage:
+                        raise RuntimeError("test build failure")
+                    return ""
+                with patch.object(builder, "ROOT", root), patch.object(
+                        builder.shutil, "which", return_value="/bin/podman"), patch.dict(
+                        os.environ, {"CONTAINER_CMD": "podman"}), patch.object(
+                        builder, "checked", side_effect=checked):
+                    if failing_stage:
+                        with self.assertRaisesRegex(RuntimeError, "test build failure"):
+                            builder.retry_app(output, "conway")
+                    else:
+                        builder.retry_app(output, "conway")
+                self.assertEqual([c[0][2] for c in calls],
+                                 ["install"] if failing_stage == "install" else ["install", "build"])
+                for args, kwargs in calls:
+                    self.assertEqual(args[0], work / "zde/zde")
+                    self.assertEqual(args[-1], "conway")
+                    self.assertEqual(kwargs["env"]["ZDE_USER_PATH"], str(work / "state"))
+                    self.assertEqual(kwargs["env"]["ZDE_IMAGE_REF"], original["zde_image"])
+                    self.assertEqual(kwargs["env"]["ZDE_STRICT_EXIT"], "1")
+                result = json.loads(next((work / "retries").glob("*/report.json")).read_text())
+                self.assertEqual(result["success"], failing_stage is None)
+                self.assertEqual((output / "tf.img").read_bytes(), b"original image")
+                self.assertEqual(json.loads((output / "build-report.json").read_text()), original)
+
+    def test_retry_without_previous_build_explains_prerequisite(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(ValueError, "No previous build"):
+                builder.retry_app(Path(temporary), "conway")
+
     def test_prerequisite_failure_removes_stale_image_and_writes_report(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
@@ -215,6 +308,7 @@ class ReleaseTests(unittest.TestCase):
             "success": True, "collection_commit": "a" * 40,
             "items": [{"id": "good", "status": "included"},
                       {"id": "broken", "status": "failed", "stage": "install", "reason": "failed"}]})
+        write_downloads(directory, json.loads((directory / "build-report.json").read_text()))
 
     def test_release_filter(self):
         releases = [
@@ -237,8 +331,11 @@ class ReleaseTests(unittest.TestCase):
                     if args[:2] == ("release", "create"):
                         description = Path(args[-1]).read_text()
                         self.assertIn("broken (install): failed", description)
-                    if fail_upload and args[:2] == ("release", "upload"):
-                        raise subprocess.CalledProcessError(1, "gh", stderr="upload failed")
+                    if args[:2] == ("release", "upload"):
+                        for name in ("tf.img", "tf.img.sha256", "tf.img.zip"):
+                            self.assertIn(directory / name, args)
+                        if fail_upload:
+                            raise subprocess.CalledProcessError(1, "gh", stderr="upload failed")
                     return ""
                 with patch.object(publisher, "gh", gh):
                     if fail_upload:

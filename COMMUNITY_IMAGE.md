@@ -39,6 +39,26 @@ Within a run directory, `zde/` is `ZDE_PATH`, `state/` is `ZDE_USER_PATH`,
 creation. Your shell environment and system ZDE dependency installations are not
 changed. The Docker/Podman container image cache is shared.
 
+## Retry one app
+
+After a build, update and rebuild a single app in its retained workspace:
+
+```sh
+python3 assets/scripts/build_community_image.py --retry TurBoss/Zeal-8bit_conway
+```
+
+ZDE aliases also work. The command uses the workspace referenced by
+`dist/community/build-report.json`, including its isolated dependencies, collection
+snapshot, configured refs, and pinned container image. Use `--output dist/OTHER`
+to select another completed bundle. It runs `zde deps install` followed by
+`zde deps build`, stops on failure, and returns a nonzero exit code.
+
+Each attempt saves a separate `build.log` and `report.json` under
+`<workspace>/retries/<unique-attempt>/`. It updates source/build files in that
+workspace but does not stage files or change the image, manifest, README, or
+original build report. Run a full build when you want a new image. Changes to
+this checkout's `collection.yml` require a full build to take effect.
+
 ## Output
 
 Live output is under `<workspace>/artifacts/`. The completed bundle is also
@@ -46,6 +66,8 @@ exported to `dist/community/` by default:
 
 - `tf.img`: verified 64 MiB ZealFS v2 TF image with an MBR.
 - `tf.img.sha256`: image checksum; run `sha256sum -c tf.img.sha256` from this directory.
+- `tf.img.zip`: compressed download containing `tf.img` and `tf.img.sha256`.
+- `README.md`: the same build description used for GitHub releases, including included, failed, and skipped software.
 - `content-manifest.json`: sorted image-visible paths, directory entries, file sizes,
   and SHA-256 hashes, with a combined content fingerprint.
 - `build-report.json`: live install/staging progress, included, failed, and skipped
@@ -124,7 +146,7 @@ release. API errors, missing baseline assets, or malformed manifests stop publis
 rather than being treated as a first build.
 
 Changed builds become normal, dated releases with unique UTC timestamp/run tags,
-marked as latest. Each release includes `tf.img`, its checksum, the content manifest,
+marked as latest. Each release includes `tf.img`, `tf.img.sha256`, `tf.img.zip`, the content manifest,
 and build report. Its description lists included software, explicitly names failed
 items that were not included with their failure stage, and lists skipped items and
 excluded filenames. All assets are uploaded to a draft before publication. If an
