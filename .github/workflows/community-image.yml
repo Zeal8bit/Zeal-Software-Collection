@@ -55,7 +55,6 @@ jobs:
           retention-days: 14
 
   publish:
-    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
     permissions:
@@ -71,7 +70,12 @@ jobs:
         with:
           name: community-image
           path: dist/community
-      - name: Publish only changed image contents
+      - name: Publish changed main images or create branch draft
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 assets/scripts/publish_community_image.py --run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+        run: |
+          args=(--run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT")
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            args+=(--draft)
+          fi
+          python3 assets/scripts/publish_community_image.py "${args[@]}"

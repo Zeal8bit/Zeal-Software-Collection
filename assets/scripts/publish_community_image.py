@@ -44,12 +44,12 @@ def changed(current, baseline):
     return current["sha256"] != baseline["sha256"]
 
 
-def publish(directory, repository, run_id):
+def publish(directory, repository, run_id, *, draft=False):
     with bundle_lock(directory):
-        return _publish(directory, repository, run_id)
+        return _publish(directory, repository, run_id, draft=draft)
 
 
-def _publish(directory, repository, run_id):
+def _publish(directory, repository, run_id, *, draft=False):
     for asset in ASSETS:
         if not (directory / asset).is_file():
             raise ValueError(f"Missing release asset: {asset}")
@@ -91,9 +91,12 @@ def _publish(directory, repository, run_id):
                 raise ValueError(f"TF image checksum mismatch: {name}")
     current = json.loads((directory / "content-manifest.json").read_text())
     validate_manifest(current)
-    # --slurp preserves all paginated arrays; API errors remain fatal.
-    pages = json.loads(gh("api", "--paginate", "--slurp", f"repos/{repository}/releases?per_page=100"))
-    baseline_release = latest_release([r for page in pages for r in page])
+    baseline_release = None
+    if not draft:
+        # Branch previews do not depend on a published baseline or content changes.
+        # --slurp preserves all paginated arrays; API errors remain fatal.
+        pages = json.loads(gh("api", "--paginate", "--slurp", f"repos/{repository}/releases?per_page=100"))
+        baseline_release = latest_release([r for page in pages for r in page])
     baseline = None
     with tempfile.TemporaryDirectory(prefix="community-release-") as temporary:
         temporary = Path(temporary)
@@ -102,7 +105,7 @@ def _publish(directory, repository, run_id):
                "--pattern", "content-manifest.json", "--dir", temporary)
             baseline = json.loads((temporary / "content-manifest.json").read_text())
         available = {asset["name"] for asset in baseline_release.get("assets", [])} if baseline_release else set()
-        if not changed(current, baseline) and set(ASSETS) <= available:
+        if not draft and not changed(current, baseline) and set(ASSETS) <= available:
             gh("release", "download", baseline_release["tag_name"], "--repo", repository,
                "--pattern", "distribution.zip.sha256", "--dir", temporary)
             previous = (temporary / "distribution.zip.sha256").read_text()
@@ -120,8 +123,11 @@ def _publish(directory, repository, run_id):
            "--notes-file", description)
         gh("release", "upload", tag, "--repo", repository,
            *[directory / asset for asset in ASSETS])
-        gh("release", "edit", tag, "--repo", repository, "--draft=false", "--latest")
-        print(f"Published {tag}")
+        if draft:
+            print(f"Created draft release {tag}")
+        else:
+            gh("release", "edit", tag, "--repo", repository, "--draft=false", "--latest")
+            print(f"Published {tag}")
         return tag
 
 
@@ -130,13 +136,15 @@ def main():
     parser.add_argument("--directory", type=Path, default=Path("dist/community"))
     parser.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY"), required=False)
     parser.add_argument("--run-id", default=os.environ.get("GITHUB_RUN_ID", "local"))
+    parser.add_argument("--draft", action="store_true",
+                        help="Always create a draft with all assets; do not publish or mark latest")
     args = parser.parse_args()
     if not args.repo or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", args.repo):
         parser.error("--repo OWNER/REPO is required")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", args.run_id):
         parser.error("Invalid run ID")
     try:
-        publish(args.directory, args.repo, args.run_id)
+        publish(args.directory, args.repo, args.run_id, draft=args.draft)
     except (ValueError, KeyError, OSError, zipfile.BadZipFile, subprocess.CalledProcessError) as exc:
         print(f"Community release failed: {exc}", file=sys.stderr)
         if isinstance(exc, subprocess.CalledProcessError):
