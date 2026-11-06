@@ -15,11 +15,14 @@ import re
 import subprocess
 import sys
 import tempfile
+import zipfile
 
-from community_image import bundle_lock, notes, validate_manifest
+from community_image import DOWNLOAD_FILES, IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, notes, validate_manifest
+
+from community_licenses import DISTRIBUTION_FILES, MATRIX, MATRIX_INPUTS, distribution_members
 
 PREFIX = "community-image-"
-ASSETS = ("tf.img", "tf.img.sha256", "tf.img.zip", "content-manifest.json", "build-report.json")
+ASSETS = (*DOWNLOAD_FILES, *DISTRIBUTION_FILES, "content-manifest.json", "build-report.json")
 
 
 def gh(*args):
@@ -55,9 +58,40 @@ def _publish(directory, repository, run_id):
         raise ValueError("Refusing to publish an unsuccessful build")
     if not re.fullmatch(r"[0-9a-f]{40}", report["collection_commit"]):
         raise ValueError("Invalid collection commit")
-    digest = hashlib.sha256((directory / "tf.img").read_bytes()).hexdigest()
-    if (directory / "tf.img.sha256").read_text() != f"{digest}  tf.img\n":
-        raise ValueError("TF image checksum mismatch")
+    extras = distribution_members(directory)
+    metadata = json.loads(extras["distribution-manifest.json"])
+    if metadata.get("version") != 1:
+        raise ValueError("Unsupported distribution manifest")
+    if any(row["id"] == MATRIX and row["status"] == "included" for row in report["items"]):
+        components = {component["id"]: component for component in metadata["components"]}
+        if not set(MATRIX_INPUTS) <= components.keys():
+            raise ValueError("Matrix is missing corresponding source materials")
+        revisions = {row["id"]: row.get("source", {}).get("current_commit") for row in report["items"]}
+        for dep_id in MATRIX_INPUTS:
+            component = components[dep_id]
+            source = extras.get(component["source"])
+            if (source is None or not revisions.get(dep_id)
+                    or component["revision"] != revisions[dep_id]
+                    or hashlib.sha256(source).hexdigest() != component["sha256"]):
+                raise ValueError(f"Source materials do not match the build: {dep_id}")
+        if "licenses/zoul0813/zeal-matrix/LICENSE" not in extras:
+            raise ValueError("Matrix is missing its GPL license text")
+    for size, name in zip(IMAGE_SIZES_MIB, IMAGE_FILES):
+        checksum = (directory / (name + ".sha256")).read_text()
+        with zipfile.ZipFile(directory / (name + ".zip")) as archive:
+            if sorted(archive.namelist()) != sorted([name, name + ".sha256", *extras]):
+                raise ValueError(f"Unexpected ZIP contents: {name}")
+            if any(archive.read(member) != data for member, data in extras.items()):
+                raise ValueError(f"Distribution materials differ in {name}")
+            if archive.getinfo(name).file_size != size * 1024 * 1024:
+                raise ValueError(f"Unexpected TF image size: {name}")
+            with archive.open(name) as source:
+                digest = hashlib.sha256()
+                for block in iter(lambda: source.read(1024 * 1024), b""):
+                    digest.update(block)
+            if (checksum != f"{digest.hexdigest()}  {name}\n"
+                    or archive.read(name + ".sha256").decode() != checksum):
+                raise ValueError(f"TF image checksum mismatch: {name}")
     current = json.loads((directory / "content-manifest.json").read_text())
     validate_manifest(current)
     # --slurp preserves all paginated arrays; API errors remain fatal.
@@ -70,9 +104,16 @@ def _publish(directory, repository, run_id):
             gh("release", "download", baseline_release["tag_name"], "--repo", repository,
                "--pattern", "content-manifest.json", "--dir", temporary)
             baseline = json.loads((temporary / "content-manifest.json").read_text())
-        if not changed(current, baseline):
-            print("Image contents unchanged; no release created.")
-            return None
+        available = {asset["name"] for asset in baseline_release.get("assets", [])} if baseline_release else set()
+        if not changed(current, baseline) and set(ASSETS) <= available:
+            gh("release", "download", baseline_release["tag_name"], "--repo", repository,
+               "--pattern", "distribution.zip.sha256", "--dir", temporary)
+            previous = (temporary / "distribution.zip.sha256").read_text()
+            if not re.fullmatch(r"[0-9a-f]{64}  distribution\.zip\n", previous):
+                raise ValueError("Invalid baseline distribution checksum")
+            if previous == (directory / "distribution.zip.sha256").read_text():
+                print("Image contents and distribution materials unchanged; no release created.")
+                return None
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         tag = f"{PREFIX}{stamp}-{run_id}"
         description = temporary / "release-notes.md"
@@ -99,7 +140,7 @@ def main():
         parser.error("Invalid run ID")
     try:
         publish(args.directory, args.repo, args.run_id)
-    except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as exc:
+    except (ValueError, KeyError, OSError, zipfile.BadZipFile, subprocess.CalledProcessError) as exc:
         print(f"Community release failed: {exc}", file=sys.stderr)
         if isinstance(exc, subprocess.CalledProcessError):
             print(exc.stderr, file=sys.stderr)

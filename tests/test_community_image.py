@@ -13,7 +13,8 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
-from community_image import bundle_lock, export_bundle, manifest, validate_manifest, write_downloads, write_json
+from community_image import IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, export_bundle, manifest, validate_manifest, write_downloads, write_json
+from community_licenses import write_distribution, distribution_members
 from build_community_image import install_and_stage, ordered
 import build_community_image as builder
 import publish_community_image as publisher
@@ -76,19 +77,22 @@ class BundleTests(unittest.TestCase):
             directory = Path(temporary)
             (directory / "contents").mkdir()
             ReleaseTests().assets(directory)
-            with zipfile.ZipFile(directory / "tf.img.zip") as archive:
-                self.assertEqual(archive.namelist(), ["tf.img", "tf.img.sha256"])
-                self.assertIsNone(archive.testzip())
-                for name in archive.namelist():
-                    self.assertEqual(archive.read(name), (directory / name).read_bytes())
-                    self.assertEqual(archive.getinfo(name).compress_type, zipfile.ZIP_DEFLATED)
+            for name in IMAGE_FILES:
+                with zipfile.ZipFile(directory / (name + ".zip")) as archive:
+                    self.assertEqual(set(archive.namelist()), {name, name + ".sha256", *distribution_members(directory)})
+                    self.assertIsNone(archive.testzip())
+                    for member in archive.namelist():
+                        self.assertEqual(archive.read(member), (directory / member).read_bytes() if member in {name, name + ".sha256"} else distribution_members(directory)[member])
+                        self.assertEqual(archive.getinfo(member).compress_type, zipfile.ZIP_DEFLATED)
             report = json.loads((directory / "build-report.json").read_text())
             description = (directory / "README.md").read_text()
             self.assertEqual(description, publisher.notes(report))
             self.assertIn("broken (install): failed", description)
             latest = directory / "latest"
             export_bundle(directory, latest)
-            self.assertEqual((latest / "tf.img.zip").read_bytes(), (directory / "tf.img.zip").read_bytes())
+            for name in IMAGE_FILES:
+                self.assertEqual((latest / (name + ".zip")).read_bytes(),
+                                 (directory / (name + ".zip")).read_bytes())
             self.assertEqual((latest / "README.md").read_text(), description)
 
     def test_export_waits_for_readers_and_keeps_runs_separate(self):
@@ -122,6 +126,37 @@ class BundleTests(unittest.TestCase):
 
 
 class BuilderTests(unittest.TestCase):
+    def test_all_capacities_are_verified_and_a_mismatch_stops_the_bundle(self):
+        for mismatch in (False, True):
+            with self.subTest(mismatch=mismatch), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                checkout = root / "zde"
+                (checkout / "mnt").mkdir(parents=True)
+                output = root / "dist"
+                output.mkdir()
+                content = {"entries": []}
+                sizes = []
+                def zde(*args):
+                    if args[0] == "image":
+                        sizes.append(int(args[-1]) // 1024)
+                        with (checkout / "mnt/tf.img").open("wb") as image:
+                            image.truncate(sizes[-1] * 1024 * 1024)
+                    else:
+                        write_json(output / "verified.json", {} if mismatch else content)
+                    return subprocess.CompletedProcess(args, 0)
+                with patch.object(builder, "ROOT", root):
+                    if mismatch:
+                        with self.assertRaisesRegex(RuntimeError, "contents differ.*2 MiB"):
+                            builder.create_images(zde, checkout, output, content)
+                        self.assertEqual(sizes, [2])
+                        self.assertFalse(list(output.glob("*.img")))
+                    else:
+                        builder.create_images(zde, checkout, output, content)
+                        self.assertEqual(sizes, [2, 16, 64, 128])
+                        for size, name in zip(IMAGE_SIZES_MIB, IMAGE_FILES):
+                            self.assertEqual((output / name).stat().st_size, size * 1024 * 1024)
+                            self.assertTrue((output / (name + ".sha256")).is_file())
+
     def test_streamed_commands_cannot_change_the_callers_terminal(self):
         import pty
         import termios
@@ -313,15 +348,31 @@ class BuilderTests(unittest.TestCase):
 
 class ReleaseTests(unittest.TestCase):
     def assets(self, directory):
-        (directory / "tf.img").write_bytes(b"image")
         import hashlib
-        (directory / "tf.img.sha256").write_text(hashlib.sha256(b"image").hexdigest() + "  tf.img\n")
+        for size, name in zip(IMAGE_SIZES_MIB, IMAGE_FILES):
+            with (directory / name).open("wb") as image:
+                image.truncate(size * 1024 * 1024)
+            digest = hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            (directory / (name + ".sha256")).write_text(digest + f"  {name}\n")
         write_json(directory / "content-manifest.json", manifest(directory / "contents")[0])
         write_json(directory / "build-report.json", {
             "success": True, "collection_commit": "a" * 40,
             "items": [{"id": "good", "status": "included"},
                       {"id": "broken", "status": "failed", "stage": "install", "reason": "failed"}]})
-        write_downloads(directory, json.loads((directory / "build-report.json").read_text()))
+        report = json.loads((directory / "build-report.json").read_text())
+        write_distribution(directory, {"items": []}, {}, directory)
+        write_downloads(directory, report)
+
+    def test_corrupt_capacity_is_rejected_before_any_github_calls(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "contents").mkdir()
+            self.assets(directory)
+            (directory / "tf-128mib.img.sha256").write_text("incorrect checksum\n")
+            with patch.object(publisher, "gh") as gh:
+                with self.assertRaisesRegex(ValueError, "checksum mismatch: tf-128mib.img"):
+                    publisher.publish(directory, "owner/repo", "123")
+                gh.assert_not_called()
 
     def test_notes_show_project_files_and_verified_tree(self):
         report = {"collection_commit": "abc", "items": [
@@ -358,7 +409,7 @@ class ReleaseTests(unittest.TestCase):
                         description = Path(args[-1]).read_text()
                         self.assertIn("broken (install): failed", description)
                     if args[:2] == ("release", "upload"):
-                        for name in ("tf.img", "tf.img.sha256", "tf.img.zip"):
+                        for name in publisher.ASSETS:
                             self.assertIn(directory / name, args)
                         if fail_upload:
                             raise subprocess.CalledProcessError(1, "gh", stderr="upload failed")
@@ -373,7 +424,7 @@ class ReleaseTests(unittest.TestCase):
                 self.assertEqual(len(edits), int(not fail_upload))
 
     def test_unchanged_and_invalid_baseline_and_lookup_errors(self):
-        for mode in ("unchanged", "invalid", "lookup-failed", "download-failed"):
+        for mode in ("unchanged", "missing-downloads", "invalid", "lookup-failed", "download-failed"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 (directory / "contents").mkdir()
@@ -385,20 +436,29 @@ class ReleaseTests(unittest.TestCase):
                         if mode == "lookup-failed":
                             raise subprocess.CalledProcessError(1, "gh")
                         return json.dumps([[{"draft": False, "tag_name": publisher.PREFIX + "old",
-                                             "published_at": "2026-01-01"}]])
+                                             "published_at": "2026-01-01",
+                                             "assets": [] if mode == "missing-downloads" else
+                                             [{"name": name} for name in publisher.ASSETS]}]])
                     if args[:2] == ("release", "download"):
                         if mode == "download-failed":
                             raise subprocess.CalledProcessError(1, "gh")
+                        if args[-3] == "distribution.zip.sha256":
+                            (Path(args[-1]) / "distribution.zip.sha256").write_text(
+                                (directory / "distribution.zip.sha256").read_text())
+                            return ""
                         baseline = json.loads((directory / "content-manifest.json").read_text())
                         write_json(Path(args[-1]) / "content-manifest.json", {} if mode == "invalid" else baseline)
                     return ""
                 with patch.object(publisher, "gh", gh):
                     if mode == "unchanged":
                         self.assertIsNone(publisher.publish(directory, "owner/repo", "123"))
+                    elif mode == "missing-downloads":
+                        self.assertIsNotNone(publisher.publish(directory, "owner/repo", "123"))
                     else:
                         with self.assertRaises((ValueError, subprocess.CalledProcessError)):
                             publisher.publish(directory, "owner/repo", "123")
-                self.assertFalse(any(c[:2] == ("release", "create") for c in calls))
+                self.assertEqual(any(c[:2] == ("release", "create") for c in calls),
+                                 mode == "missing-downloads")
 
 
 if __name__ == "__main__":
