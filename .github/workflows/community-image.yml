@@ -2,7 +2,7 @@ name: Community TF image
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/community-image]
   schedule:
     - cron: '17 7 * * *'
   workflow_dispatch:
@@ -55,6 +55,7 @@ jobs:
           retention-days: 14
 
   publish:
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
     permissions:
