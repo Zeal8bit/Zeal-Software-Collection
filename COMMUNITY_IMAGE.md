@@ -64,9 +64,13 @@ this checkout's `collection.yml` require a full build to take effect.
 Live output is under `<workspace>/artifacts/`. The completed bundle is also
 exported to `dist/community/` by default:
 
-- `tf.img`: verified 64 MiB ZealFS v2 TF image with an MBR.
-- `tf.img.sha256`: image checksum; run `sha256sum -c tf.img.sha256` from this directory.
-- `tf.img.zip`: compressed download containing `tf.img` and `tf.img.sha256`.
+- `tf-{size}mib.img`: verified ZealFS v2 TF images with an MBR, in **2, 16, 64, and 128 MiB** capacities.
+- `tf-{size}mib.img.sha256`: per-image checksum; for example, run `sha256sum -c tf-2mib.img.sha256`.
+- `tf-{size}mib.img.zip`: compressed download containing that image, its checksum,
+  and the companion license notices and available source materials described below.
+  Extract before flashing. Every capacity contains the same software; larger images
+  provide more free filesystem space after flashing. Empty space compresses well,
+  so download sizes are much smaller than the extracted images.
 - `README.md`: the same build description used for GitHub releases, including each project’s newly added TF files, the verified TF directory tree, and failed and skipped software.
 - `content-manifest.json`: sorted image-visible paths, directory entries, file sizes,
   and SHA-256 hashes, with a combined content fingerprint.
@@ -74,6 +78,8 @@ exported to `dist/community/` by default:
   items, source revisions, excluded filenames, the collection checksum, ZDE
   revisions, and overall build status.
 - `build.log`: ZDE command output for diagnosing individual failures.
+- `distribution.zip` and `distribution.zip.sha256`: the same companion licensing
+  and source files included in every image ZIP, also available separately.
 
 Use `--output dist/my-community-image` to select another output directory under
 this checkout's `dist/`. Generated output is ignored by Git. A new run writes to
@@ -81,6 +87,14 @@ its own workspace first. If the run fails, its completed
 failure bundle replaces the latest output and removes the previous latest image;
 previous run workspaces retain their own files. Monitor the printed workspace
 path for live progress, and use `dist/community/` for the latest completed run.
+
+## Licenses in the ZIP downloads
+
+Each image ZIP includes the projects' license and notice files under
+`licenses/<owner>/<project>/`, copied from their Git clones, with an index in
+`THIRD_PARTY_NOTICES.md`. Source companions and build instructions are included
+under `sources/` where provided. These files are outside `tf.img` and do not
+consume space on the flashed filesystem.
 
 ## Installation and failure handling
 
@@ -113,14 +127,19 @@ The manifest uses the same rule and follows symlinks as ZDE does. Exclusions are
 recorded in the build report. Unsupported file types, broken symlinks, and symlink
 cycles fail verification rather than silently omitting data.
 
-Once staging completes, the builder runs:
+Once staging completes, the builder creates each capacity using ZDE (sizes are in KiB):
 
 ```sh
+zde image tf create --yes 2048
+zde image tf create --yes 16384
 zde image tf create --yes 65536
+zde image tf create --yes 131072
 ```
 
-It then mounts the generated image inside ZDE and checks the full file and directory
-manifest against staging. Only a matching image is copied to the output directory.
+It mounts each generated image inside ZDE and checks the full file and directory
+manifest against the same staging tree, and checks the image byte size. Only matching
+images are copied to the output directory. All four sizes must succeed, including
+fitting all staged contents into the 2 MiB image; overflow fails the build.
 Individual item failures allow a partial image. Image-tool failures, image-creation
 or verification failures, or no successfully staged software make the build fail.
 A build report is written on failure; logs are retained once ZDE commands begin.
@@ -149,7 +168,9 @@ The publisher compares against the newest published release whose tag starts wit
 `community-image-`, ignoring drafts and unrelated releases. It validates both
 manifests and compares content fingerprints. Files added, removed, or changed,
 and directory changes, cause a new release. Timestamps, reports, build dates, and
-source revisions do not. A changed failure report alone does not create a release.
+source revisions do not. Missing required download assets also cause a new release,
+so older releases are replaced with the complete capacity selection. A changed
+failure report alone does not create a release.
 A partial image that loses files compared with the previous release does count as
 a changed image.
 
@@ -158,8 +179,9 @@ release. API errors, missing baseline assets, or malformed manifests stop publis
 rather than being treated as a first build.
 
 Changed builds become normal, dated releases with unique UTC timestamp/run tags,
-marked as latest. Each release includes `tf.img`, `tf.img.sha256`, `tf.img.zip`, the content manifest,
-and build report. Its description lists included software, explicitly names failed
+marked as latest. Each release includes four ZIP downloads and their image checksums,
+the content manifest, and build report. Raw images remain in the local build bundle;
+GitHub releases distribute the compressed images. Its description lists included software, explicitly names failed
 items that were not included with their failure stage, and lists skipped items and
 excluded filenames. All assets are uploaded to a draft before publication. If an
 upload fails, the draft remains unpublished and is ignored by future comparisons;

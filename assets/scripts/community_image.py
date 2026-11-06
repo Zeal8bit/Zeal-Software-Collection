@@ -11,6 +11,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+from community_licenses import DISTRIBUTION_FILES, distribution_members
+
 
 def write_json(path: Path, value: object) -> None:
     # Readers monitoring a live build must always see a complete JSON document.
@@ -26,7 +28,11 @@ def write_json(path: Path, value: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-BUNDLE_FILES = ("tf.img", "tf.img.sha256", "tf.img.zip", "README.md",
+IMAGE_SIZES_MIB = (2, 16, 64, 128)
+IMAGE_FILES = tuple(f"tf-{size}mib.img" for size in IMAGE_SIZES_MIB)
+DOWNLOAD_FILES = tuple(name + suffix for name in IMAGE_FILES
+                       for suffix in (".sha256", ".zip"))
+BUNDLE_FILES = (*IMAGE_FILES, *DOWNLOAD_FILES, *DISTRIBUTION_FILES, "README.md",
                 "content-manifest.json", "build.log", "build-report.json")
 
 
@@ -44,7 +50,7 @@ def bundle_lock(directory: Path, *, exclusive: bool = False):
 def export_bundle(source: Path, destination: Path) -> None:
     # Keep the latest snapshot coherent when local builds overlap with publishing.
     with bundle_lock(destination, exclusive=True):
-        for name in BUNDLE_FILES:
+        for name in (*BUNDLE_FILES, "tf.img", "tf.img.sha256", "tf.img.zip"):
             if (source / name).is_file():
                 shutil.copyfile(source / name, destination / name)
             else:
@@ -141,6 +147,11 @@ def tf_tree(entries):
 
 def notes(report):
     lines = ["Community TF image built from collection commit `" + report["collection_commit"] + "`.",
+             "", "Download a ZIP for your preferred capacity: **2, 16, 64, or 128 MiB**.",
+             "All sizes contain the same software. Extract the image before flashing; "
+             "the capacity determines space available after flashing, not the compressed download size.",
+             "", "Each ZIP includes license notices and available matching source outside the TF image.",
+             "Included programs retain their own licenses; see THIRD_PARTY_NOTICES.md.",
              "", "### Included software", ""]
     lines.extend(["Files are listed at their TF image locations; only files newly added by each project are attributed to it.",
                   "", "| Software | Installed files (TF) |", "| --- | --- |"])
@@ -171,8 +182,12 @@ def notes(report):
 
 def write_downloads(directory: Path, report: dict) -> None:
     """Package the verified image and describe the same build locally and on GitHub."""
-    with zipfile.ZipFile(directory / "tf.img.zip", "w",
-                         compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-        for name in ("tf.img", "tf.img.sha256"):
-            archive.write(directory / name, arcname=name)
+    extras = distribution_members(directory)
+    for name in IMAGE_FILES:
+        with zipfile.ZipFile(directory / (name + ".zip"), "w",
+                             compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+            for member in (name, name + ".sha256"):
+                archive.write(directory / member, arcname=member)
+            for member, data in extras.items():
+                archive.writestr(member, data)
     (directory / "README.md").write_text(notes(report))

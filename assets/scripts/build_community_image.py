@@ -13,7 +13,9 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 
-from community_image import bundle_lock, conflicts, export_bundle, manifest, write_downloads, write_json
+from community_image import IMAGE_SIZES_MIB, bundle_lock, conflicts, export_bundle, manifest, write_downloads, write_json
+
+from community_licenses import write_distribution
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
@@ -156,6 +158,29 @@ def verify_image(image, output):
             checked(["sudo", "umount", directory])
 
 
+def create_images(zde, checkout, output, content):
+    """Create each capacity from the same staging tree and verify every image."""
+    relative = output.relative_to(ROOT)
+    verified = output / "verified.json"
+    for size in IMAGE_SIZES_MIB:
+        name = f"tf-{size}mib.img"
+        if zde("image", "tf", "create", "--yes", str(size * 1024)).returncode:
+            raise RuntimeError(f"TF image creation failed ({size} MiB)")
+        if zde("exec", "sudo", "python3", "/src/assets/scripts/build_community_image.py",
+               "--verify-image", "/mnt/tf.img", "--manifest-output",
+               str(Path("/src") / relative / "verified.json")).returncode:
+            raise RuntimeError(f"TF image verification failed ({size} MiB)")
+        if json.loads(verified.read_text()) != content:
+            raise RuntimeError(f"TF image contents differ from staging manifest ({size} MiB)")
+        verified.unlink()
+        image = checkout / "mnt/tf.img"
+        if image.stat().st_size != size * 1024 * 1024:
+            raise RuntimeError(f"Unexpected TF image size ({size} MiB)")
+        shutil.copyfile(image, output / name)
+        digest = hashlib.sha256((output / name).read_bytes()).hexdigest()
+        (output / (name + ".sha256")).write_text(f"{digest}  {name}\n")
+
+
 def build(latest_output):
     report = {"version": 1, "success": False, "status": "building", "items": [],
               "started_at": datetime.now(timezone.utc).isoformat()}
@@ -225,24 +250,12 @@ def build(latest_output):
         if (not any(row["status"] == "included" for row in report["items"])
                 or not any(entry["type"] == "file" for entry in content["entries"])):
             raise RuntimeError("No software was successfully staged")
-        if zde("image", "tf", "create", "--yes", "65536").returncode:
-            raise RuntimeError("TF image creation failed")
-        # /src is the collection checkout in ZDE's standard Compose configuration.
-        relative = output.relative_to(ROOT)
-        verified = output / "verified.json"
-        if zde("exec", "sudo", "python3", "/src/assets/scripts/build_community_image.py",
-               "--verify-image", "/mnt/tf.img", "--manifest-output",
-               str(Path("/src") / relative / "verified.json")).returncode:
-            raise RuntimeError("TF image verification failed")
-        if json.loads(verified.read_text()) != content:
-            raise RuntimeError("TF image contents differ from staging manifest")
-        verified.unlink()
-        shutil.copyfile(checkout / "mnt" / "tf.img", output / "tf.img")
+        create_images(zde, checkout, output, content)
         write_json(output / "content-manifest.json", content)
+        report["image_sizes_mib"] = list(IMAGE_SIZES_MIB)
         report["tf_contents"] = [{"path": entry["path"], "type": entry["type"]}
                                  for entry in content["entries"]]
-        digest = hashlib.sha256((output / "tf.img").read_bytes()).hexdigest()
-        (output / "tf.img.sha256").write_text(f"{digest}  tf.img\n")
+        write_distribution(output, report, final_catalog, checkout / "home")
         write_downloads(output, report)
         report["success"] = True
     except Exception as exc:

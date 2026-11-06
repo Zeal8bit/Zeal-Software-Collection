@@ -7,6 +7,9 @@ on:
       - assets/scripts/validate_collection_changes.py
       - assets/scripts/build_community_image.py
       - assets/scripts/community_image.py
+      - assets/scripts/community_licenses.py
+      - assets/scripts/publish_community_image.py
+      - .github/workflows/community-image.yml
       - tests/**
       - .github/workflows/validate-collection.yml
 
