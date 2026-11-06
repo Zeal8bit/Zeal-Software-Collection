@@ -1,0 +1,81 @@
+name: Community TF image
+
+on:
+  push:
+    branches: [main, feature/community-image]
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: community-image
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install builder prerequisites
+        run: python3 -m pip install 'PyYAML==6.0.3'
+      - name: Test community image scripts
+        run: python3 -m unittest discover -s tests -v
+      - name: Restore successful project builds
+        id: build-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: tmp/community-image-cache/snapshot/
+          key: community-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            community-build-v1-${{ runner.os }}-${{ runner.arch }}-
+      - name: Build and verify community image
+        run: python3 assets/scripts/build_community_image.py
+      - name: Cache successful project builds
+        if: always() && steps.build-cache.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: tmp/community-image-cache/snapshot/
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}
+      - name: Save image and build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: community-image
+          path: dist/community/
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: community-image
+          path: dist/community
+      - name: Publish changed main images or create branch draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT")
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            args+=(--draft)
+          fi
+          python3 assets/scripts/publish_community_image.py "${args[@]}"
