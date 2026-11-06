@@ -8,6 +8,7 @@ on:
       - assets/scripts/build_community_image.py
       - assets/scripts/community_image.py
       - assets/scripts/community_licenses.py
+      - assets/scripts/community_cache.py
       - assets/scripts/publish_community_image.py
       - .github/workflows/community-image.yml
       - tests/**

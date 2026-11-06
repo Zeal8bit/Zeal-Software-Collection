@@ -44,6 +44,37 @@ Within a run directory, `zde/` is `ZDE_PATH`, `state/` is `ZDE_USER_PATH`,
 creation. Your shell environment and system ZDE dependency installations are not
 changed. The Docker/Podman container image cache is shared.
 
+## Reusing unchanged builds
+
+Builds automatically reuse successful project installations from
+`tmp/community-image-cache/`. Each run still has its own workspace, checks the
+configured upstream refs, stages files, collects licenses, and creates and verifies
+all four image capacities.
+
+A project is rebuilt from a clean checkout when its commit, effective build
+recipe, or any direct or transitive dependency's build inputs change. Every
+project implicitly depends on the ZOS kernel: a kernel commit change rebuilds
+everything. Changing ZDE, the pinned container digest, or the builder/cache code
+also invalidates cached builds. An unchanged project can reuse its binaries,
+libraries, and other generated files, with cache hits and misses recorded per
+item in `build-report.json`.
+
+Only successful installs and staging results are saved. Failed projects and their
+dependents are retried next time. Missing or corrupt caches fall back to fresh
+builds. Concurrent runs use separate restored installations and share a lock only
+while copying or publishing the cache snapshot. Interrupted cache writes are
+ignored; the cache is optional, and generated images are always verified.
+
+For a completely fresh build that neither reads nor updates the build cache:
+
+```sh
+python3 assets/scripts/build_community_image.py --no-cache
+```
+
+Remove `tmp/community-image-cache/` when no builds are using it to clear the local
+cache. GitHub nightlies restore and save the same snapshot using GitHub Actions
+Cache. PR collection validation continues to use fresh environments.
+
 ## Retry one app
 
 After a build, update and rebuild a single app in its retained workspace:
@@ -110,13 +141,15 @@ dependencies, build instructions, artifact paths, and staging destinations. As i
 ZDE itself, built-in catalog settings take precedence for matching IDs. Explicit
 collection tags and commits remain pinned; nightly builds do not override them.
 
-Each ZDE-visible item gets its own `zde deps install <id>` invocation, in dependency
-order. ZDE-required dependencies, including the OS, are installed first during
-environment setup. Collection entries declare additional SDK and library
+Each ZDE-visible item is installed individually through ZDE, in dependency order.
+Required dependencies, including the OS, are installed first. Collection entries declare additional SDK and library
 prerequisites, so ZDE can install each project in a fresh workspace. Additional dependencies and ZealFS image tools are installed as needed.
 Individual failures do not stop attempts for the remaining items. A dependent
 whose prerequisite failed is not included, even if its repository exists on disk.
-ZDE installs/builds fresh dependencies; no previous build cache is reused.
+The builder installs dependencies in order using ZDE's per-dependency API, so
+syncing a child does not reset a cached parent's generated SDK libraries.
+Changed build inputs force a clean installation rather than an incremental Make
+or CMake build that might retain stale outputs.
 
 Successful installs are staged individually using `zde deps stage tf <id>`. The
 isolated ZDE configuration enables `deps.rename-bins`, removing the `.bin`

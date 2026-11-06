@@ -29,8 +29,22 @@ jobs:
         run: python3 -m pip install 'PyYAML==6.0.3'
       - name: Test community image scripts
         run: python3 -m unittest discover -s tests -v
+      - name: Restore successful project builds
+        id: build-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: tmp/community-image-cache/snapshot/
+          key: community-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            community-build-v1-${{ runner.os }}-${{ runner.arch }}-
       - name: Build and verify community image
         run: python3 assets/scripts/build_community_image.py
+      - name: Cache successful project builds
+        if: always() && steps.build-cache.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: tmp/community-image-cache/snapshot/
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}
       - name: Save image and build diagnostics
         if: always()
         uses: actions/upload-artifact@v4
