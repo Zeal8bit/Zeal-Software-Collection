@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from community_image import IMAGE_SIZES_MIB, bundle_lock, conflicts, export_bundle, manifest, write_downloads, write_json
 
 from community_licenses import write_distribution
+from community_cache import BuildCache, fingerprint, kernel_dependencies
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
@@ -29,6 +30,7 @@ from mods.deps import DepCatalog
 c = DepCatalog()
 print('COMMUNITY_CATALOG=' + json.dumps([
     dict(id=d.id, parents=d.depends_on, required=d.required,
+         definition=d.raw,
          stage_disabled=d.stage_disabled,
          path=str(d.path_resolved), installed=d.installed,
          revision=c.lock_deps.get(d.id, {})) for d in c.deps]))
@@ -87,18 +89,42 @@ def ordered(catalog, selected):
     return result
 
 
-def install_and_stage(ids, catalog, zde, staging, report, report_path):
+def install_and_stage(ids, catalog, zde, staging, report, report_path, *, cache=None):
     """Failures are isolated per item, including dependency and staging failures."""
     installed = {}
     for dep_id in ids:
         row = {"id": dep_id, "status": "installing", "stage": "install"}
         report["items"].append(row)
         write_json(report_path, report)
-        result = zde("deps", "install", dep_id)
         failed_parents = [p for p in catalog[dep_id]["parents"] if not installed.get(p)]
-        if result.returncode or failed_parents:
-            row["reason"] = ("Failed dependencies: " + ", ".join(failed_parents)
-                             if failed_parents else "Install/build failed; see build.log")
+        if failed_parents:
+            row.update(status="failed", reason="Failed dependencies: " + ", ".join(failed_parents))
+            installed[dep_id] = False
+            write_json(report_path, report)
+            continue
+        result = zde("deps", "install", dep_id)
+        if result.returncode == 0 and cache is not None:
+            key = cache.key(dep_id)
+            previous = cache.restored.get(dep_id)
+            if previous and previous["key"] == key and catalog[dep_id]["installed"]:
+                cache.reuse(dep_id)
+                row["cache"] = "hit"
+                print(f"Build cache hit: {dep_id}", flush=True)
+            else:
+                row["cache"] = "miss"
+                # An installed checkout can be synced without being rebuilt by ZDE.
+                # Remove it on a changed key so even Make projects build from scratch.
+                if catalog[dep_id]["installed"]:
+                    print(f"Build inputs changed; rebuilding cleanly: {dep_id}", flush=True)
+                    cache.discard(dep_id)
+                    result = zde("deps", "install", dep_id)
+                    if result.returncode == 0:
+                        cache.key(dep_id)
+        if result.returncode:
+            if cache is not None:
+                cache.keys.pop(dep_id, None)
+                cache.revisions.pop(dep_id, None)
+            row["reason"] = "Install/build failed; see build.log"
             installed[dep_id] = False
             row["status"] = "failed"
         else:
@@ -181,7 +207,14 @@ def create_images(zde, checkout, output, content):
         (output / (name + ".sha256")).write_text(f"{digest}  {name}\n")
 
 
-def build(latest_output):
+def install_dependency(dep_id):
+    """Use ZDE's existing per-dependency API; the builder owns dependency ordering."""
+    sys.path.insert(0, "/home/zeal8bit/zde")
+    from mods.deps import DepCatalog
+    return DepCatalog().install_dep(dep_id, allow_required=True, include_dependencies=False)
+
+
+def build(latest_output, *, use_cache=True):
     # Fail before creating a workspace or printing Docker/Podman diagnostics.
     try:
         import yaml
@@ -233,6 +266,11 @@ def build(latest_output):
                    ZDE_IMAGE_REF=image_id, ZDE_STRICT_EXIT="1", HOST_CWD=str(ROOT),
                    CONTAINER_CMD=runtime)
         def zde(*args):
+            if args[:2] == ("deps", "install"):
+                # Do not sync parents again while building a child: that can reset
+                # tracked SDK libraries restored from the cache.
+                args = ("exec", "python3", "/src/assets/scripts/build_community_image.py",
+                        "--install-dependency", args[2])
             return run([checkout / "zde", *args], env=env, log=output / "build.log")
         def catalog():
             result = zde("exec", "python3", "-c", CATALOG_QUERY)
@@ -242,14 +280,29 @@ def build(latest_output):
                            if line.startswith("COMMUNITY_CATALOG="))
             return {d["id"]: d for d in json.loads(payload)}
         configure_staging(zde)
-        effective = catalog()
+        effective = kernel_dependencies(catalog())
+        cache = None
+        if use_cache:
+            context = {"version": 1, "zde_commit": report["zde_commit"], "image": image_id,
+                       "platform": "linux/amd64", "builder": fingerprint([
+                           Path(__file__).read_text(),
+                           (ROOT / "assets/scripts/community_cache.py").read_text()])}
+            cache = BuildCache(ROOT / "tmp/community-image-cache", context,
+                               effective, checkout / "home", state)
+            cache.restore()
+            effective = kernel_dependencies(catalog())
+            cache.catalog = effective
+        report["cache_enabled"] = use_cache
         required = [dep["id"] for dep in effective.values() if dep["required"]]
         ids = ordered(effective, required + selected + ["Zeal8bit/ZealFS"])
         staging = checkout / "mnt" / "tf"
         if staging.exists():
             shutil.rmtree(staging)
         staging.mkdir(parents=True)
-        install_and_stage(ids, effective, zde, staging, report, output / "build-report.json")
+        install_and_stage(ids, effective, zde, staging, report, output / "build-report.json", cache=cache)
+        if cache is not None:
+            cache.verify_sources()
+            cache.save(report)
         final_catalog = catalog()
         for row in report["items"]:
             row["source"] = final_catalog[row["id"]]["revision"]
@@ -325,11 +378,15 @@ def main():
                         help="Latest completed bundle directory within dist/")
     parser.add_argument("--retry", metavar="APP",
                         help="Update and rebuild one app in the last build workspace; no image creation")
+    parser.add_argument("--no-cache", action="store_true", help="Build fresh without reading or updating the build cache")
+    parser.add_argument("--install-dependency", help=argparse.SUPPRESS)
     parser.add_argument("--verify-image", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--manifest-output", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
     try:
-        if args.verify_image:
+        if args.install_dependency:
+            return install_dependency(args.install_dependency)
+        elif args.verify_image:
             verify_image(args.verify_image, args.manifest_output)
         else:
             output = args.output.resolve()
@@ -337,7 +394,7 @@ def main():
             if args.retry:
                 retry_app(output, args.retry)
             else:
-                build(output)
+                build(output, use_cache=not args.no_cache)
     except Exception as exc:
         print(f"Community image build failed: {exc}", file=sys.stderr)
         return 1

@@ -355,7 +355,7 @@ class BuilderTests(unittest.TestCase):
                     (staging / "last").write_text("last")
                 return subprocess.CompletedProcess(args, rc, "")
             install_and_stage(ids, catalog, zde, staging, report, staging.parent / "report.json")
-            self.assertEqual([c[-1] for c in calls if c[1] == "install"], ids)
+            self.assertEqual([c[-1] for c in calls if c[1] == "install"], [name for name in ids if name != "dependent"])
             self.assertNotIn(("deps", "stage", "tf", "dependent"), calls)
             self.assertEqual((staging / "app").read_text(), "good")
             self.assertFalse((staging / "debris").exists())
