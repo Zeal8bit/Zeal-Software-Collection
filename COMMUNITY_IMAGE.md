@@ -195,9 +195,14 @@ can catch missing dependencies when the build exercises them, but dependencies
 in ZDE's required baseline are always present. Its output is in the Actions log.
 
 `.github/workflows/community-image.yml` runs the same builder on every push to
-`main`, nightly at **07:17 UTC**, and through **Run workflow** in GitHub Actions.
+`main` and `feature/community-image`, nightly at **07:17 UTC**, and through
+**Run workflow** in GitHub Actions once the workflow exists on the default branch.
 Workflow runs are serialized. Reports and logs are retained as workflow artifacts
 for 14 days, including on failed builds when output exists.
+
+Successful branch builds create a draft release with all download assets, even
+when image contents are unchanged. Drafts remain unpublished and are not marked
+latest. Builds on `main` publish only changed images as described below.
 
 A separate publishing job downloads successful build output. Its release credential
 is available only to the publishing step; collection build commands run with
@@ -231,6 +236,8 @@ Publishing can also be run separately with GitHub CLI and release-write access:
 ```sh
 GH_TOKEN=... python3 assets/scripts/publish_community_image.py --repo OWNER/REPO
 ```
+
+Add `--draft` to create an unpublished preview with all assets instead.
 
 This is separate from local image generation and publishes to the specified repo.
 

@@ -416,8 +416,8 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(publisher.latest_release(releases)["tag_name"], publisher.PREFIX + "old")
 
     def test_first_release_upload_then_publish_and_failed_upload_stays_draft(self):
-        for fail_upload in (False, True):
-            with self.subTest(fail_upload=fail_upload), tempfile.TemporaryDirectory() as temporary:
+        for draft, fail_upload in ((False, False), (False, True), (True, False), (True, True)):
+            with self.subTest(draft=draft, fail_upload=fail_upload), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 (directory / "contents").mkdir()
                 self.assets(directory)
@@ -425,6 +425,7 @@ class ReleaseTests(unittest.TestCase):
                 def gh(*args):
                     calls.append(args)
                     if args[0] == "api":
+                        self.assertFalse(draft, "Draft previews must not depend on a published baseline")
                         return "[[]]"
                     if args[:2] == ("release", "create"):
                         description = Path(args[-1]).read_text()
@@ -438,11 +439,13 @@ class ReleaseTests(unittest.TestCase):
                 with patch.object(publisher, "gh", gh):
                     if fail_upload:
                         with self.assertRaises(subprocess.CalledProcessError):
-                            publisher.publish(directory, "owner/repo", "123")
+                            publisher.publish(directory, "owner/repo", "123", draft=draft)
                     else:
-                        self.assertTrue(publisher.publish(directory, "owner/repo", "123").startswith(publisher.PREFIX))
+                        self.assertTrue(publisher.publish(directory, "owner/repo", "123", draft=draft).startswith(publisher.PREFIX))
                 edits = [c for c in calls if c[:2] == ("release", "edit")]
-                self.assertEqual(len(edits), int(not fail_upload))
+                self.assertEqual(len(edits), int(not fail_upload and not draft))
+                if draft:
+                    self.assertFalse(any("--latest" in call or "--draft=false" in call for call in calls))
 
     def test_unchanged_and_invalid_baseline_and_lookup_errors(self):
         for mode in ("unchanged", "missing-downloads", "invalid", "lookup-failed", "download-failed"):
