@@ -114,8 +114,9 @@ exported to `dist/community/` by default:
   items, source revisions, excluded filenames, the collection checksum, ZDE
   revisions, and overall build status.
 - `build.log`: ZDE command output for diagnosing individual failures.
-- `distribution.zip` and `distribution.zip.sha256`: the same companion licensing
-  and source-link notices included in every image ZIP, also available separately.
+- `distribution.zip` and `distribution.zip.sha256`: internal intermediates used to
+  put identical licenses and notices into each image ZIP. They are not uploaded
+  as separate release downloads.
 
 Use `--output dist/my-community-image` to select another output directory under
 this checkout's `dist/`. Generated output is ignored by Git. A new run writes to
@@ -211,8 +212,9 @@ read-only repository permissions and no persisted checkout credential.
 The publisher compares against the newest published release whose tag starts with
 `community-image-`, ignoring drafts and unrelated releases. It validates both
 manifests and compares content fingerprints. Files added, removed, or changed,
-and directory changes, cause a new release. Timestamps, reports, build dates, and
-source revisions do not. Missing required download assets also cause a new release,
+and directory changes, cause a new release. License notices or pinned source-download
+links changing also cause a release. Timestamps, reports, and build dates alone do
+not. Missing required download assets also cause a new release,
 so older releases are replaced with the complete capacity selection. A changed
 failure report alone does not create a release.
 A partial image that loses files compared with the previous release does count as

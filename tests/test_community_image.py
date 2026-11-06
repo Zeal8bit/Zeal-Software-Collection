@@ -405,6 +405,10 @@ class ReleaseTests(unittest.TestCase):
                             {"path": "games", "type": "directory"},
                             {"path": "games/game", "type": "file"}]}
         description = publisher.notes(report)
+        self.assertIn("Which file should I download?", description)
+        for size in (2, 16, 64, 128):
+            self.assertIn(f"`tf-{size}mib.img.zip`", description)
+        self.assertIn("GitHub's automatic **Source code**", description)
         self.assertIn("| coreutils | `t:/bin/cat`<br>`t:/bin/ls` |", description)
         self.assertIn("t:/\n├── bin\n│   ├── cat\n│   └── ls\n└── games\n    └── game", description)
 
@@ -433,6 +437,8 @@ class ReleaseTests(unittest.TestCase):
                     if args[:2] == ("release", "upload"):
                         for name in publisher.ASSETS:
                             self.assertIn(directory / name, args)
+                        self.assertNotIn(directory / "distribution.zip", args)
+                        self.assertNotIn(directory / "distribution.zip.sha256", args)
                         if fail_upload:
                             raise subprocess.CalledProcessError(1, "gh", stderr="upload failed")
                     return ""
@@ -448,7 +454,8 @@ class ReleaseTests(unittest.TestCase):
                     self.assertFalse(any("--latest" in call or "--draft=false" in call for call in calls))
 
     def test_unchanged_and_invalid_baseline_and_lookup_errors(self):
-        for mode in ("unchanged", "missing-downloads", "invalid", "lookup-failed", "download-failed"):
+        for mode in ("unchanged", "missing-downloads", "notices-changed", "legacy-baseline",
+                     "invalid", "lookup-failed", "download-failed"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 (directory / "contents").mkdir()
@@ -466,23 +473,23 @@ class ReleaseTests(unittest.TestCase):
                     if args[:2] == ("release", "download"):
                         if mode == "download-failed":
                             raise subprocess.CalledProcessError(1, "gh")
-                        if args[-3] == "distribution.zip.sha256":
-                            (Path(args[-1]) / "distribution.zip.sha256").write_text(
-                                (directory / "distribution.zip.sha256").read_text())
-                            return ""
                         baseline = json.loads((directory / "content-manifest.json").read_text())
+                        if mode == "notices-changed":
+                            baseline["distribution_sha256"] = "0" * 64
+                        elif mode == "legacy-baseline":
+                            baseline.pop("distribution_sha256")
                         write_json(Path(args[-1]) / "content-manifest.json", {} if mode == "invalid" else baseline)
                     return ""
                 with patch.object(publisher, "gh", gh):
                     if mode == "unchanged":
                         self.assertIsNone(publisher.publish(directory, "owner/repo", "123"))
-                    elif mode == "missing-downloads":
+                    elif mode in {"missing-downloads", "notices-changed", "legacy-baseline"}:
                         self.assertIsNotNone(publisher.publish(directory, "owner/repo", "123"))
                     else:
                         with self.assertRaises((ValueError, subprocess.CalledProcessError)):
                             publisher.publish(directory, "owner/repo", "123")
                 self.assertEqual(any(c[:2] == ("release", "create") for c in calls),
-                                 mode == "missing-downloads")
+                                 mode in {"missing-downloads", "notices-changed", "legacy-baseline"})
 
 
 if __name__ == "__main__":

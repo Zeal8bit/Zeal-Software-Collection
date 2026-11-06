@@ -19,10 +19,10 @@ import zipfile
 
 from community_image import DOWNLOAD_FILES, IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, notes, validate_manifest
 
-from community_licenses import DISTRIBUTION_FILES, distribution_members, source_archive_url
+from community_licenses import distribution_members, source_archive_url
 
 PREFIX = "community-image-"
-ASSETS = (*DOWNLOAD_FILES, *DISTRIBUTION_FILES, "content-manifest.json", "build-report.json")
+ASSETS = (*DOWNLOAD_FILES, "content-manifest.json", "build-report.json")
 
 
 def gh(*args):
@@ -91,6 +91,8 @@ def _publish(directory, repository, run_id, *, draft=False):
                 raise ValueError(f"TF image checksum mismatch: {name}")
     current = json.loads((directory / "content-manifest.json").read_text())
     validate_manifest(current)
+    if current.get("distribution_sha256") != hashlib.sha256((directory / "distribution.zip").read_bytes()).hexdigest():
+        raise ValueError("Content manifest does not match the license notices")
     baseline_release = None
     if not draft:
         # Branch previews do not depend on a published baseline or content changes.
@@ -106,12 +108,7 @@ def _publish(directory, repository, run_id, *, draft=False):
             baseline = json.loads((temporary / "content-manifest.json").read_text())
         available = {asset["name"] for asset in baseline_release.get("assets", [])} if baseline_release else set()
         if not draft and not changed(current, baseline) and set(ASSETS) <= available:
-            gh("release", "download", baseline_release["tag_name"], "--repo", repository,
-               "--pattern", "distribution.zip.sha256", "--dir", temporary)
-            previous = (temporary / "distribution.zip.sha256").read_text()
-            if not re.fullmatch(r"[0-9a-f]{64}  distribution\.zip\n", previous):
-                raise ValueError("Invalid baseline distribution checksum")
-            if previous == (directory / "distribution.zip.sha256").read_text():
+            if baseline.get("distribution_sha256") == current["distribution_sha256"]:
                 print("Image contents and distribution materials unchanged; no release created.")
                 return None
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
