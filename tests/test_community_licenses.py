@@ -1,32 +1,37 @@
 from __future__ import annotations
 
-import hashlib
-import io
 import json
 from pathlib import Path
 import subprocess
 import sys
-import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
-from community_licenses import MATRIX_INPUTS, distribution_members, source_archive, write_distribution
+from community_licenses import distribution_members, source_archive_url, write_distribution
 from community_image import IMAGE_FILES, manifest, write_downloads, write_json
 import publish_community_image as publisher
 import test_community_image as fixtures
 
 
+PROJECTS = ("zoul0813/zeal-matrix", "zoul0813/zeal-mint", "Zeal8bit/Zeal-8-bit-OS",
+            "Zeal8bit/Zeal-VideoBoard-SDK", "TurBoss/Zeal-8bit_conway", "Candid-Moe/Zorth")
+UNLICENSED = {"TurBoss/Zeal-8bit_conway", "Candid-Moe/Zorth"}
+
+
 class DistributionTests(unittest.TestCase):
     def sources(self, home):
         catalog = {}
-        for dep_id in MATRIX_INPUTS:
+        for dep_id in PROJECTS:
             path = home / dep_id
             path.mkdir(parents=True)
             (path / "source.c").write_text("/* Original source and attribution */\n")
-            (path / "LICENSE").write_text("Project license terms\n")
+            if dep_id not in UNLICENSED:
+                (path / "LICENSE").write_text("Project license terms\n")
+                (path / "third-party").mkdir()
+                (path / "third-party/NOTICE").write_text("Nested notice\n")
             (path / "CMakeLists.txt").write_text("# Build instructions\n")
             subprocess.run(["git", "init", "-q", str(path)], check=True)
             subprocess.run(["git", "-C", str(path), "add", "."], check=True)
@@ -38,7 +43,7 @@ class DistributionTests(unittest.TestCase):
                                "revision": {"current_commit": revision}}
         return catalog
 
-    def test_matrix_permission_source_and_notices_allow_normal_publication(self):
+    def test_pinned_links_and_copied_licenses_allow_normal_publication(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             home = directory / "home"
@@ -54,20 +59,18 @@ class DistributionTests(unittest.TestCase):
             write_distribution(directory, report, catalog, home)
             self.assertEqual((directory / "distribution.zip").read_bytes(), first)
             members = distribution_members(directory)
-            self.assertIn(b"GPL version 2", members["THIRD_PARTY_NOTICES.md"])
-            self.assertIn(b"explicit rights-holder permission", members["THIRD_PARTY_NOTICES.md"])
             self.assertNotIn("LICENSE", members)
-            for dep_id in MATRIX_INPUTS:
-                self.assertEqual(members[f"licenses/{dep_id}/LICENSE"], b"Project license terms\n")
-            self.assertNotIn("publication_blockers", report["distribution"])
+            self.assertFalse(any(name.startswith("sources/") or name.endswith(".tar.gz") for name in members))
+            for dep_id in PROJECTS:
+                if dep_id not in UNLICENSED:
+                    self.assertEqual(members[f"licenses/{dep_id}/LICENSE"], b"Project license terms\n")
+                    self.assertEqual(members[f"licenses/{dep_id}/third-party/NOTICE"], b"Nested notice\n")
             for component in report["distribution"]["components"]:
-                data = members[component["source"]]
-                self.assertEqual(hashlib.sha256(data).hexdigest(), component["sha256"])
-                with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
-                    names = archive.getnames()
-                    self.assertTrue(any(name.endswith("source.c") for name in names))
-                    self.assertTrue(any(name.endswith("CMakeLists.txt") for name in names))
-                    self.assertFalse(any(".git/" in name or "untracked-build.bin" in name for name in names))
+                revision = catalog[component["id"]]["revision"]["current_commit"]
+                self.assertEqual(component["source_url"],
+                                 f"https://github.com/{component['id']}/archive/{revision}.tar.gz")
+                self.assertIn(component["source_url"].encode(), members["THIRD_PARTY_NOTICES.md"])
+                self.assertEqual(component["files"] == [], component["id"] in UNLICENSED)
             write_json(directory / "build-report.json", report)
             write_downloads(directory, report)
             self.assertEqual(manifest(directory / "contents")[0], original_image_content)
@@ -81,15 +84,12 @@ class DistributionTests(unittest.TestCase):
                 self.assertIsNotNone(publisher.publish(directory, "owner/repo", "permission-test"))
                 self.assertTrue(any(call.args[:2] == ("release", "edit") for call in calls.call_args_list))
 
-    def test_modified_or_wrong_revision_source_is_rejected(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            home = Path(temporary)
-            catalog = self.sources(home)
-            dep_id = MATRIX_INPUTS[0]
-            path = home / dep_id
-            revision = catalog[dep_id]["revision"]["current_commit"]
-            with self.assertRaisesRegex(ValueError, "revision mismatch"):
-                source_archive(path, "0" * 40, "matrix")
-            (path / "source.c").write_text("changed after build\n")
-            with self.assertRaisesRegex(ValueError, "Modified tracked source"):
-                source_archive(path, revision, "matrix")
+    def test_source_urls_require_an_exact_commit_and_valid_github_repository(self):
+        revision = "a" * 40
+        self.assertEqual(source_archive_url("https://github.com/zoul0813/zeal-mint.git", revision),
+                         f"https://github.com/zoul0813/zeal-mint/archive/{revision}.tar.gz")
+        for repository, ref in [("https://github.com/zoul0813/zeal-mint", "main"),
+                                ("https://example.com/zoul0813/zeal-mint", revision),
+                                ("https://github.com/zoul0813/zeal-mint/../other", revision)]:
+            with self.assertRaises(ValueError):
+                source_archive_url(repository, ref)
