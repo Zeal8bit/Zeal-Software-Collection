@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import io
 import json
 import os
 from pathlib import Path
@@ -126,6 +127,26 @@ class BundleTests(unittest.TestCase):
 
 
 class BuilderTests(unittest.TestCase):
+    def test_missing_yaml_fails_before_workspace_or_container_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            output = root / "dist/community"
+            output.mkdir(parents=True)
+            (output / "build-report.json").write_text("previous report")
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with patch.object(builder, "ROOT", root), patch.dict(sys.modules, {"yaml": None}), patch.object(
+                    sys, "argv", ["builder", "--output", str(output)]), patch.object(
+                    sys, "stdout", stdout), patch.object(sys, "stderr", stderr), patch.object(
+                    builder, "checked") as checked:
+                self.assertEqual(builder.main(), 1)
+            checked.assert_not_called()
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("Missing Python prerequisite: PyYAML", stderr.getvalue())
+            self.assertIn("python3 -m venv .venv", stderr.getvalue())
+            self.assertIn(".venv/bin/python assets/scripts/build_community_image.py", stderr.getvalue())
+            self.assertFalse((root / "tmp").exists())
+            self.assertEqual((output / "build-report.json").read_text(), "previous report")
+
     def test_all_capacities_are_verified_and_a_mismatch_stops_the_bundle(self):
         for mismatch in (False, True):
             with self.subTest(mismatch=mismatch), tempfile.TemporaryDirectory() as temporary:

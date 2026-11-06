@@ -9,6 +9,11 @@ python3 -m pip install 'PyYAML==6.0.3'
 python3 assets/scripts/build_community_image.py
 ```
 
+For later runs, use `.venv/bin/python assets/scripts/build_community_image.py`, or
+activate `.venv` before running the script directly. If PyYAML is missing from the
+selected Python, the builder stops immediately with setup instructions before
+creating a workspace or contacting the container engine.
+
 You need Python 3.10 or newer, Git, Docker or Podman with a Compose provider, and a running
 Linux container engine. On macOS, use Docker Desktop or an equivalent Linux Docker
 engine. Internet access is needed to download ZDE, its container, and collection
