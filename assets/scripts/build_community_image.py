@@ -182,6 +182,19 @@ def create_images(zde, checkout, output, content):
 
 
 def build(latest_output):
+    # Fail before creating a workspace or printing Docker/Podman diagnostics.
+    try:
+        import yaml
+    except ModuleNotFoundError as exc:
+        if exc.name != "yaml":
+            raise
+        raise RuntimeError(
+            f"Missing Python prerequisite: PyYAML (using {sys.executable}).\n"
+            "Set up and run with the project's virtual environment:\n"
+            "  python3 -m venv .venv\n"
+            "  .venv/bin/python -m pip install 'PyYAML==6.0.3'\n"
+            "  .venv/bin/python assets/scripts/build_community_image.py"
+        ) from exc
     report = {"version": 1, "success": False, "status": "building", "items": [],
               "started_at": datetime.now(timezone.utc).isoformat()}
     workspace_root = ROOT / "tmp" / "community-image"
@@ -202,7 +215,6 @@ def build(latest_output):
         if runtime not in {"docker", "podman"} or not shutil.which(runtime):
             raise RuntimeError("Missing prerequisite: Docker or Podman")
         checked([runtime, "info"])
-        import yaml
         collection_source = (ROOT / "collection.yml").read_bytes()
         collection = yaml.safe_load(collection_source)
         report["collection_sha256"] = hashlib.sha256(collection_source).hexdigest()
