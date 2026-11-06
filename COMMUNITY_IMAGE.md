@@ -67,7 +67,7 @@ exported to `dist/community/` by default:
 - `tf-{size}mib.img`: verified ZealFS v2 TF images with an MBR, in **2, 16, 64, and 128 MiB** capacities.
 - `tf-{size}mib.img.sha256`: per-image checksum; for example, run `sha256sum -c tf-2mib.img.sha256`.
 - `tf-{size}mib.img.zip`: compressed download containing that image, its checksum,
-  and the companion license notices and available source materials described below.
+  and the license notices and pinned source-download links described below.
   Extract before flashing. Every capacity contains the same software; larger images
   provide more free filesystem space after flashing. Empty space compresses well,
   so download sizes are much smaller than the extracted images.
@@ -79,7 +79,7 @@ exported to `dist/community/` by default:
   revisions, and overall build status.
 - `build.log`: ZDE command output for diagnosing individual failures.
 - `distribution.zip` and `distribution.zip.sha256`: the same companion licensing
-  and source files included in every image ZIP, also available separately.
+  and source-link notices included in every image ZIP, also available separately.
 
 Use `--output dist/my-community-image` to select another output directory under
 this checkout's `dist/`. Generated output is ignored by Git. A new run writes to
@@ -92,9 +92,10 @@ path for live progress, and use `dist/community/` for the latest completed run.
 
 Each image ZIP includes the projects' license and notice files under
 `licenses/<owner>/<project>/`, copied from their Git clones, with an index in
-`THIRD_PARTY_NOTICES.md`. Source companions and build instructions are included
-under `sources/` where provided. These files are outside `tf.img` and do not
-consume space on the flashed filesystem.
+`THIRD_PARTY_NOTICES.md`. Each project has a direct GitHub source-download link
+pinned to the exact build commit, including required runtimes and dependencies.
+Source code is not bundled in the ZIPs. License files and notices are outside
+`tf.img` and do not consume space on the flashed filesystem.
 
 ## Installation and failure handling
 

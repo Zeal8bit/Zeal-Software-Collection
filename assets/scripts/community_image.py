@@ -150,7 +150,7 @@ def notes(report):
              "", "Download a ZIP for your preferred capacity: **2, 16, 64, or 128 MiB**.",
              "All sizes contain the same software. Extract the image before flashing; "
              "the capacity determines space available after flashing, not the compressed download size.",
-             "", "Each ZIP includes license notices and available matching source outside the TF image.",
+             "", "Each ZIP includes license notices and links to matching source downloads outside the TF image.",
              "Included programs retain their own licenses; see THIRD_PARTY_NOTICES.md.",
              "", "### Included software", ""]
     lines.extend(["Files are listed at their TF image locations; only files newly added by each project are attributed to it.",

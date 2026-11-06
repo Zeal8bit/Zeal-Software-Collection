@@ -19,7 +19,7 @@ import zipfile
 
 from community_image import DOWNLOAD_FILES, IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, notes, validate_manifest
 
-from community_licenses import DISTRIBUTION_FILES, MATRIX, MATRIX_INPUTS, distribution_members
+from community_licenses import DISTRIBUTION_FILES, distribution_members, source_archive_url
 
 PREFIX = "community-image-"
 ASSETS = (*DOWNLOAD_FILES, *DISTRIBUTION_FILES, "content-manifest.json", "build-report.json")
@@ -60,22 +60,19 @@ def _publish(directory, repository, run_id):
         raise ValueError("Invalid collection commit")
     extras = distribution_members(directory)
     metadata = json.loads(extras["distribution-manifest.json"])
-    if metadata.get("version") != 1:
+    if metadata.get("version") != 2:
         raise ValueError("Unsupported distribution manifest")
-    if any(row["id"] == MATRIX and row["status"] == "included" for row in report["items"]):
-        components = {component["id"]: component for component in metadata["components"]}
-        if not set(MATRIX_INPUTS) <= components.keys():
-            raise ValueError("Matrix is missing corresponding source materials")
-        revisions = {row["id"]: row.get("source", {}).get("current_commit") for row in report["items"]}
-        for dep_id in MATRIX_INPUTS:
-            component = components[dep_id]
-            source = extras.get(component["source"])
-            if (source is None or not revisions.get(dep_id)
-                    or component["revision"] != revisions[dep_id]
-                    or hashlib.sha256(source).hexdigest() != component["sha256"]):
-                raise ValueError(f"Source materials do not match the build: {dep_id}")
-        if "licenses/zoul0813/zeal-matrix/LICENSE" not in extras:
-            raise ValueError("Matrix is missing its GPL license text")
+    components = {component["id"]: component for component in metadata["components"]}
+    revisions = {row["id"]: row.get("source", {}).get("current_commit") for row in report["items"]}
+    expected = {row["id"] for row in report["items"]
+                if row["status"] == "included" and row.get("source", {}).get("current_commit")}
+    if not expected <= components.keys():
+        raise ValueError("Missing source download links")
+    for dep_id, component in components.items():
+        if (not revisions.get(dep_id) or component["revision"] != revisions[dep_id]
+                or component["source_url"] != source_archive_url(component["repo"], revisions[dep_id])
+                or any(name not in extras for name in component["files"])):
+            raise ValueError(f"Distribution materials do not match the build: {dep_id}")
     for size, name in zip(IMAGE_SIZES_MIB, IMAGE_FILES):
         checksum = (directory / (name + ".sha256")).read_text()
         with zipfile.ZipFile(directory / (name + ".zip")) as archive:
