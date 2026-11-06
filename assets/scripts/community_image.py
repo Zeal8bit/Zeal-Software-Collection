@@ -116,6 +116,11 @@ def validate_manifest(value: dict) -> dict:
     encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode()
     if value.get("sha256") != hashlib.sha256(encoded).hexdigest():
         raise ValueError("Content manifest checksum mismatch")
+    if "distribution_sha256" in value:
+        digest = value["distribution_sha256"]
+        if (not isinstance(digest, str) or len(digest) != 64
+                or any(c not in "0123456789abcdef" for c in digest)):
+            raise ValueError("Invalid distribution fingerprint")
     return value
 
 
@@ -147,11 +152,22 @@ def tf_tree(entries):
 
 def notes(report):
     lines = ["Community TF image built from collection commit `" + report["collection_commit"] + "`.",
-             "", "Download a ZIP for your preferred capacity: **2, 16, 64, or 128 MiB**.",
+             "", "### Which file should I download?", "",
+             "Download **one** image ZIP for the filesystem capacity you want after flashing:", "",
+             "| Download | Extracted image capacity |", "| --- | --- |",
+             *[f"| `tf-{size}mib.img.zip` | {size} MiB |" for size in IMAGE_SIZES_MIB], "",
              "All sizes contain the same software. Extract the image before flashing; "
              "the capacity determines space available after flashing, not the compressed download size.",
-             "", "Each ZIP includes license notices and links to matching source downloads outside the TF image.",
-             "Included programs retain their own licenses; see THIRD_PARTY_NOTICES.md.",
+             "Larger capacities leave more room for your own files. Choose an image that fits your card.",
+             "", "Each ZIP contains the `.img` to flash, its `.sha256` checksum, license files, "
+             "and notices with links to the matching source code. No separate license download is needed.",
+             "", "Other release files:", "",
+             "- `tf-…mib.img.sha256`: optional separate image checksums; the same checksums are inside the ZIPs.",
+             "- `content-manifest.json`: file inventory and hashes for checking image contents.",
+             "- `build-report.json`: source revisions, build results, failures, and skipped projects.",
+             "", "GitHub's automatic **Source code** ZIP/TAR downloads contain the collection repository, "
+             "not a flashable TF image.",
+             "", "Included programs retain their own licenses; see THIRD_PARTY_NOTICES.md.",
              "", "### Included software", ""]
     lines.extend(["Files are listed at their TF image locations; only files newly added by each project are attributed to it.",
                   "", "| Software | Installed files (TF) |", "| --- | --- |"])
@@ -183,6 +199,9 @@ def notes(report):
 def write_downloads(directory: Path, report: dict) -> None:
     """Package the verified image and describe the same build locally and on GitHub."""
     extras = distribution_members(directory)
+    content = json.loads((directory / "content-manifest.json").read_text())
+    content["distribution_sha256"] = hashlib.sha256((directory / "distribution.zip").read_bytes()).hexdigest()
+    write_json(directory / "content-manifest.json", content)
     for name in IMAGE_FILES:
         with zipfile.ZipFile(directory / (name + ".zip"), "w",
                              compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
