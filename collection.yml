@@ -214,6 +214,28 @@ dependencies:
       - zsol
       - solitaire
 
+
+  - id: harlock74/zeal-dungeon-of-zeal
+    repo: https://github.com/harlock74/zeal-dungeon-of-zeal.git
+    build:
+      artifacts:
+        - bin/zdungeon
+        - bin/assets
+      root: /games/zdungeon
+    metadata:
+      screenshot: https://raw.githubusercontent.com/harlock74/zeal-dungeon-of-zeal/main/screenshots/1.png
+      name: Dungeon of Zeal
+      category:
+        - game
+      description: Action exploration game with 8 floors, 72 rooms and a final encounter for the Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zdungeon
+      - dungeon
+  
+
   - id: CaPusto/zealmine
     repo: https://github.com/CaPusto/zealmine.git
     metadata:
