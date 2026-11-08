@@ -2,6 +2,8 @@
 
 In this repository, you will find a list of existing software for Zeal 8-bit Computer.
 
+Try pre-built software with the [community TF image](#community-tf-image).
+
 Projects marked with:
 
 * 🪛 involve a hardware extension.
@@ -21,6 +23,7 @@ Projects marked with:
 * [Couples](https://github.com/harlock74/zeal-couples.git) by [@arcadia6502](https://github.com/harlock74): Poker cards memory-inspired game for Zeal 8-bit Computer
 * [Solitaire](https://github.com/harlock74/zeal-solitaire.git) by [@arcadia6502](https://github.com/harlock74): Solitaire-inspired game for Zeal 8-bit Computer
 * [zealmine](https://github.com/CaPusto/zealmine.git) by [@CaPusto](https://github.com/CaPusto): Minesweeper for Zeal 8-bit Computer
+* [zeal-tetris](https://github.com/CaPusto/zeal-tetris.git) by [@CaPusto](https://github.com/CaPusto): TETRIS for the Zeal 8-bit Computer
 * [Checkers](https://github.com/harlock74/zeal-checkers.git) by [@arcadia6502](https://github.com/harlock74): Checkers for Zeal 8-bit Computer
 * [Minigolf](https://github.com/harlock74/zeal-minigolf.git) by [@arcadia6502](https://github.com/harlock74): Mini-golf for Zeal 8-bit Computer
 
@@ -41,6 +44,7 @@ Projects marked with:
 * [Zeal Coreutils](https://github.com/zoul0813/zeal-coreutils.git) by [@zoul0813](https://github.com/zoul0813): Alternative shell core commands and extra utilities
 * [Zeal Monitor](https://github.com/zoul0813/zeal-monitor.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: Monitor program for Zeal 8-bit OS
 * [Zeal Archiver](https://github.com/zoul0813/zeal-archiver.git) by [@zoul0813](https://github.com/zoul0813): Archive utility for Zeal 8-bit software
+* [Zeal Flasher](https://github.com/Zeal8bit/Zeal-Flasher.git) by [@Zeal8bit](https://github.com/Zeal8bit): NOR flash programming utility for Zeal 8-bit Computer
 
 ## 📚 Library
 * [Zeal Coreutils](https://github.com/zoul0813/zeal-coreutils.git) by [@zoul0813](https://github.com/zoul0813): Alternative shell core commands and extra utilities
@@ -82,6 +86,30 @@ Projects marked with:
 * [Zeal GBC Adapter](https://github.com/Zeal8bit/Zeal-GBC-Adapter.git) by [@Zeal8bit](https://github.com/Zeal8bit) 🪛: Game Boy and Game Boy Color cartridge adapter project
 * [Zeal SNES Adapter](https://github.com/Zeal8bit/Zeal-SNES-Adapter.git) by [@Zeal8bit](https://github.com/Zeal8bit) 🪛: SNES controller adapter for Zeal 8-bit Computer
 * [Zeal CompactFlash](https://github.com/Zeal8bit/Zeal-CompactFlash.git) by [@Zeal8bit](https://github.com/Zeal8bit) 🪛: CompactFlash interface project for Zeal 8-bit Computer
+
+## Community TF image
+
+The community TF image packages pre-built software from this collection on a ready-to-use ZealFS v2 image. See the [latest release](https://github.com/Zeal8bit/Zeal-Software-Collection/releases/latest) for downloads, installation instructions, and included software.
+
+For local builds and image-generation details, see [COMMUNITY_IMAGE.md](COMMUNITY_IMAGE.md).
+
+### Flash a kernel from Zeal
+
+The TF image includes these files under `t:/sys`:
+
+| File | Purpose |
+| --- | --- |
+| `flasher` | Program the computer's NOR flash. |
+| `zeal8bit.rom` | Complete stock kernel ROM image, including its init program. |
+| `zshell.rom` | Complete ZShell kernel ROM image, including ZShell and coreutils. |
+
+To install the ZShell ROM, run:
+
+```text
+t:/sys/flasher t:/sys/zshell.rom
+```
+
+Use `t:/sys/zeal8bit.rom` instead to install the stock ROM. Leave the optional address blank: both images start at address `0`. Flasher erases the NOR flash, writes the selected ROM image, and reboots.
 
 ## Add your project to the list
 

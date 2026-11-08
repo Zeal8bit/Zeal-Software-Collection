@@ -43,6 +43,17 @@ class DistributionTests(unittest.TestCase):
                                "revision": {"current_commit": revision}}
         return catalog
 
+    def test_romdisk_only_contributors_have_distribution_notices(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            catalog = self.sources(directory / "home")
+            contributors = list(catalog)[:2]
+            report = {"items": [], "kernels": [
+                {"status": "included", "sources": {key: catalog[key]["revision"] for key in contributors}}]}
+            write_distribution(directory, report, catalog, directory / "home")
+            self.assertEqual({component["id"] for component in report["distribution"]["components"]},
+                             set(contributors))
+
     def test_pinned_links_and_copied_licenses_allow_normal_publication(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

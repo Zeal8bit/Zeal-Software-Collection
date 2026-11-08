@@ -36,6 +36,9 @@ def write_distribution(directory: Path, report: dict, catalog: dict, home: Path)
     metadata = {"version": 2, "components": []}
     included = {row["id"] for row in report["items"] if row["status"] == "included"}
     selected = set(included)
+    for kernel in report.get("kernels", []):
+        if kernel["status"] == "included":
+            selected.update(kernel["sources"])
     selected.update(dep_id for dep_id, dep in catalog.items() if dep.get("required"))
     pending = list(selected)
     while pending:

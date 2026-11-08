@@ -10,6 +10,11 @@ dependencies:
   #   tag: <optional tag to use instead of default>
   #   build: <optional build instructions, either a boolean or an object with tool-specific fields>
   #   depends_on: <optional list of other entries this one depends on, by id>
+  #   kernels: <optional list of complete ROM images to include under t:/sys>
+  #     - config: <ZDE kernel configuration name>
+  #       output: <unique image filename, at most 16 UTF-8 bytes>
+  #       romdisk: <optional list of project IDs to stage with zde deps stage romdisk>
+  # Kernel ROM disks start empty; project artifacts come from their existing build definitions.
   #   metadata:
   #     name: <human-friendly name>
   #     category: <list of categories this entry belongs to, e.g. "game", "demo", "software", "language", "development-tool", "library", "core", "extra", "hardware">
@@ -429,6 +434,12 @@ dependencies:
   # Software
   - id: zoul0813/zeal-zshell
     repo: https://github.com/zoul0813/zeal-zshell.git
+    kernels:
+      - config: zshell
+        output: zshell.rom
+        romdisk:
+          - zoul0813/zeal-zshell
+          - zoul0813/zeal-coreutils
     build:
       tool: cmake
       artifacts:
@@ -834,8 +845,29 @@ dependencies:
       - web-emulator
 
   # System software
+  - id: Zeal8bit/Zeal-Flasher
+    repo: https://github.com/Zeal8bit/Zeal-Flasher.git
+    build:
+      tool: cmake
+      artifacts:
+        - build/flasher.bin
+      root: /sys
+    metadata:
+      name: Zeal Flasher
+      category:
+        - software
+      description: NOR flash programming utility for Zeal 8-bit Computer
+      author:
+        name: Zeal8bit
+        link: https://github.com/Zeal8bit
+    aliases:
+      - flasher
+
   - id: Zeal8bit/Zeal-8-bit-OS
     repo: https://github.com/Zeal8bit/Zeal-8-bit-OS.git
+    kernels:
+      - config: zeal8bit
+        output: zeal8bit.rom
     metadata:
       screenshot: https://zeal8bit.com/data/sc-shots/zos.png
       name: Zeal 8-bit OS
