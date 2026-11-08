@@ -215,6 +215,7 @@ dependencies:
       - solitaire
 
 
+
   - id: harlock74/zeal-dungeon-of-zeal
     repo: https://github.com/harlock74/zeal-dungeon-of-zeal.git
     build:
@@ -222,6 +223,10 @@ dependencies:
         - bin/zdungeon
         - bin/assets
       root: /games/zdungeon
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://raw.githubusercontent.com/harlock74/zeal-dungeon-of-zeal/main/screenshots/1.png
       name: Dungeon of Zeal
@@ -234,8 +239,8 @@ dependencies:
     aliases:
       - zdungeon
       - dungeon
-  
 
+  
   - id: CaPusto/zealmine
     repo: https://github.com/CaPusto/zealmine.git
     metadata:
