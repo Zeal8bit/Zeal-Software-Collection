@@ -178,6 +178,16 @@ def notes(report):
         files = row.get("files")
         paths = "<br>".join("`t:/" + path.replace("|", "\\|") + "`" for path in files) if files else "—"
         lines.append(f"| {name} | {paths} |")
+    if report.get("kernels"):
+        lines.extend(["", "### Complete ROM images", "",
+                      "Use `t:/sys/flasher` with one of these images to program the computer's NOR flash.",
+                      "Each image contains its kernel and matching ROM disk.", "",
+                      "| Image | Kernel configuration | ROM disk projects |",
+                      "| --- | --- | --- |"])
+        for kernel in report["kernels"]:
+            if kernel["status"] == "included":
+                projects = ", ".join(kernel["romdisk"]) or "Stock ROM disk (init)"
+                lines.append(f"| `t:/{kernel['path']}` | `{kernel['config']}` | {projects} |")
     if "tf_contents" in report:
         lines.extend(["", "### TF image tree", "", "```text", tf_tree(report["tf_contents"]), "```"])
     lines.extend(["", "### Not included — failed items", ""])

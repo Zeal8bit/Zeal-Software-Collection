@@ -17,6 +17,7 @@ from community_image import IMAGE_SIZES_MIB, bundle_lock, conflicts, export_bund
 
 from community_licenses import write_distribution
 from community_cache import BuildCache, fingerprint, kernel_dependencies
+from community_kernels import build_kernels, kernel_specs
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
@@ -250,6 +251,7 @@ def build(latest_output, *, use_cache=True):
         checked([runtime, "info"])
         collection_source = (ROOT / "collection.yml").read_bytes()
         collection = yaml.safe_load(collection_source)
+        kernels = kernel_specs(collection["dependencies"])
         report["collection_sha256"] = hashlib.sha256(collection_source).hexdigest()
         selected = [d["id"] for d in collection["dependencies"] if d.get("zde") is not False]
         report["collection_commit"] = checked(["git", "rev-parse", "HEAD"]).strip()
@@ -310,6 +312,8 @@ def build(latest_output, *, use_cache=True):
                            for r in report["items"])
         if tools_failed or not final_catalog["Zeal8bit/ZealFS"]["installed"]:
             raise RuntimeError("ZealFS image tools failed to install")
+        build_kernels(kernels, final_catalog, zde, checkout, staging, report,
+                      output / "build-report.json")
         content, excluded = manifest(staging)
         report["excluded_names"] = excluded
         if (not any(row["status"] == "included" for row in report["items"])

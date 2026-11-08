@@ -7,6 +7,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
 from build_community_image import ordered
+from community_kernels import kernel_specs
 
 
 class CollectionTests(unittest.TestCase):
@@ -35,6 +36,14 @@ class CollectionTests(unittest.TestCase):
         self.assertTrue({"Zeal8bit/Zeal-VideoBoard-SDK",
                          "zoul0813/zeal-game-dev-kit", "zoul0813/zeal-coreutils",
                          "zoul0813/zeal-archiver"}.issubset(chain))
+
+    def test_flashable_kernels_and_system_utility_are_declared(self):
+        variants = {spec["config"]: spec for spec in kernel_specs(self.entries)}
+        self.assertEqual(variants["zeal8bit"]["output"], "zeal8bit.rom")
+        self.assertEqual(variants["zshell"]["romdisk"],
+                         ["zoul0813/zeal-zshell", "zoul0813/zeal-coreutils"])
+        self.assertEqual(self.by_id["Zeal8bit/Zeal-Flasher"]["build"],
+                         {"tool": "cmake", "artifacts": ["build/flasher.bin"], "root": "/sys"})
 
 
 if __name__ == "__main__":

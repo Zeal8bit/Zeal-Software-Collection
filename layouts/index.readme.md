@@ -2,6 +2,8 @@
 
 In this repository, you will find a list of existing software for Zeal 8-bit Computer.
 
+Try pre-built software with the [community TF image](#community-tf-image).
+
 Projects marked with:
 
 * 🪛 involve a hardware extension.
@@ -35,6 +37,30 @@ Projects marked with:
     {{- print "\n* " $item }}
   {{- end }}
 {{- end }}
+
+## Community TF image
+
+The community TF image packages pre-built software from this collection on a ready-to-use ZealFS v2 image. See the [latest release](https://github.com/Zeal8bit/Zeal-Software-Collection/releases/latest) for downloads, installation instructions, and included software.
+
+For local builds and image-generation details, see [COMMUNITY_IMAGE.md](COMMUNITY_IMAGE.md).
+
+### Flash a kernel from Zeal
+
+The TF image includes these files under `t:/sys`:
+
+| File | Purpose |
+| --- | --- |
+| `flasher` | Program the computer's NOR flash. |
+| `zeal8bit.rom` | Complete stock kernel ROM image, including its init program. |
+| `zshell.rom` | Complete ZShell kernel ROM image, including ZShell and coreutils. |
+
+To install the ZShell ROM, run:
+
+```text
+t:/sys/flasher t:/sys/zshell.rom
+```
+
+Use `t:/sys/zeal8bit.rom` instead to install the stock ROM. Leave the optional address blank: both images start at address `0`. Flasher erases the NOR flash, writes the selected ROM image, and reboots.
 
 ## Add your project to the list
 

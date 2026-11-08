@@ -34,6 +34,7 @@ Required fields:
 - `metadata.category`: one or more categories
 - `metadata.description`: short summary
 - `metadata.author.name`: author name
+- `depends_on`: required when the project links libraries or uses additional SDKs; list their collection IDs
 
 Recommended fields:
 
@@ -45,8 +46,30 @@ Optional fields:
 - `branch`: if the project should use a non-default branch
 - `tag`: if the project should point to a specific tag
 - `build`: build metadata
-- `depends_on`: direct SDK and library prerequisites by collection ID
 - `metadata.flags`: status flags
+
+### Build Dependencies
+
+If your project links a library, you **must** declare it in `depends_on`. This
+includes ZVB, coreutils, ZGDK, and any other libraries used by the project. Use
+the full collection IDs, not their aliases:
+
+```yaml
+  depends_on:
+    - Zeal8bit/Zeal-VideoBoard-SDK
+    - zoul0813/zeal-coreutils
+    - zoul0813/zeal-game-dev-kit
+```
+
+List every library your project directly links, even if another dependency also
+depends on it. Inspect your build files for SDK imports and linked libraries;
+only include dependencies the project uses. The Zeal OS SDK is provided by ZDE
+and does not need a per-project declaration.
+
+Do not rely on libraries already installed in your development environment.
+Community image builds and pull request checks use isolated ZDE environments,
+so undeclared libraries can cause the project to fail to build or be omitted
+from the image.
 
 ### Valid Categories
 
@@ -97,8 +120,9 @@ Please:
 
 1. Check that your YAML formatting is valid and list items are indented consistently.
 2. Make sure the project metadata is complete and uses the correct category and flags.
-3. Keep descriptions short and factual.
-4. Run `make` to regenerate the site output and update `README.md` before opening your pull request.
+3. Declare all linked libraries and additional SDKs in `depends_on`.
+4. Keep descriptions short and factual.
+5. Run `make` to regenerate the site output and update `README.md` before opening your pull request.
 
 ## Local Testing And Site Updates
 
@@ -196,11 +220,8 @@ See [COMMUNITY_IMAGE.md](COMMUNITY_IMAGE.md) to generate a community `tf.img` lo
 understand partial-build reports, or review the nightly GitHub release workflow.
 The local builder requires no GitHub credentials.
 
-When adding or updating an installable project, inspect its build files and declare
-all direct SDK and library prerequisites in `depends_on`. The OS is installed
-as a required ZDE dependency and needs no per-project declaration. A dependency already installed in your
-normal ZDE environment can hide a missing declaration; the pull request check
-installs changed projects in separate fresh environments to help catch these errors. Set explicit `build.artifacts` when outputs live
+When adding or updating an installable project, follow the
+[build dependency requirements](#build-dependencies) above. Set explicit `build.artifacts` when outputs live
 outside the inferred `bin/` or `build/` paths or include companion data files.
 
 See [COLLECTION_AUDIT.md](COLLECTION_AUDIT.md) for the current dependency audit,

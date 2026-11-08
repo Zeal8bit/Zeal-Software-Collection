@@ -12,6 +12,7 @@ import tempfile
 import yaml
 
 from build_community_image import CATALOG_QUERY, IMAGE, ROOT, ZDE_REPO, checked, configure_staging, run
+from community_kernels import OS_ID, build_kernels, kernel_specs
 
 
 def entries(document):
@@ -33,12 +34,22 @@ def changed_entries(base, current):
     return [entry for key, entry in after.items() if before.get(key) != entry]
 
 
+def validation_targets(base, current):
+    after = entries(current)
+    specs = kernel_specs(list(after.values()))
+    changed = {entry["id"] for entry in changed_entries(base, current)}
+    owners = {spec["owner"] for spec in specs
+              if changed.intersection([OS_ID, spec["owner"], *spec["romdisk"]])}
+    return [key for key, entry in after.items() if entry.get("zde") is not False
+            and ((key in changed and entry.get("build") is not False) or key in owners)]
+
+
 def validate(base_ref, jobs):
     base = subprocess.check_output(["git", "show", f"{base_ref}:collection.yml"], cwd=ROOT, text=True)
     source = (ROOT / "collection.yml").read_bytes()
     changed = changed_entries(base, source)
-    targets = [entry["id"] for entry in changed
-               if entry.get("zde") is not False and entry.get("build") is not False]
+    targets = validation_targets(base, source)
+    specs = kernel_specs(list(entries(source).values()))
     for entry in changed:
         if entry["id"] not in targets:
             print(f"Skipping {entry['id']}: excluded from ZDE or build disabled", flush=True)
@@ -85,10 +96,28 @@ def validate(base_ref, jobs):
                     return dep_id, f"required baseline dependency {required} failed"
             if zde("deps", "install", dep_id).returncode:
                 return dep_id, "installation/build failed"
-            if effective[dep_id]["stage_disabled"]:
-                return dep_id, None
-            if zde("deps", "stage", "tf", dep_id).returncode:
+            if not effective[dep_id]["stage_disabled"] and zde("deps", "stage", "tf", dep_id).returncode:
                 return dep_id, "TF staging failed"
+            variants = [spec for spec in specs if spec["owner"] == dep_id]
+            if variants:
+                for contributor in dict.fromkeys(p for spec in variants for p in spec["romdisk"]):
+                    if contributor != dep_id and zde("deps", "install", contributor).returncode:
+                        return dep_id, f"ROM disk project installation failed: {contributor}"
+                refreshed = zde("exec", "python3", "-c", CATALOG_QUERY)
+                if refreshed.returncode:
+                    return dep_id, "could not refresh ZDE catalog"
+                payload = next(line.partition("=")[2] for line in refreshed.stdout.splitlines()
+                               if line.startswith("COMMUNITY_CATALOG="))
+                effective = {entry["id"]: entry for entry in json.loads(payload)}
+                report = {"items": [{"id": key, "status": "installed"}
+                                    for key, entry in effective.items() if entry["installed"]]}
+                staging = checkout / "mnt/tf"
+                staging.mkdir(parents=True, exist_ok=True)
+                try:
+                    build_kernels(variants, effective, zde, checkout, staging, report,
+                                  project / "kernel-report.json")
+                except RuntimeError as exc:
+                    return dep_id, str(exc)
             return dep_id, None
 
         with ThreadPoolExecutor(max_workers=jobs) as pool:
