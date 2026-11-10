@@ -14,11 +14,73 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets/scripts"))
-from community_image import IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, export_bundle, manifest, validate_manifest, write_downloads, write_json
+from community_image import IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, export_bundle, manifest, release_changes, validate_manifest, write_downloads, write_json
 from community_licenses import write_distribution, distribution_members
 from build_community_image import install_and_stage, ordered
 import build_community_image as builder
 import publish_community_image as publisher
+
+
+class ChangelogTests(unittest.TestCase):
+    def test_project_changes_include_transitive_dependencies_and_changed_files(self):
+        def project(name, revision="a", dependencies=(), status="included"):
+            return {"id": "owner/" + name, "status": status,
+                    "stage": "install", "reason": "failed",
+                    "source": {"current_commit": revision},
+                    "dependencies": ["owner/" + dep for dep in dependencies],
+                    "files": ["bin/" + name]}
+        old = {"items": [project("sdk", status="skipped"),
+                         project("library", dependencies=["sdk"], status="skipped"),
+                         project("game", dependencies=["library"]), project("updated"),
+                         project("rebuilt"), project("removed"), project("failed"),
+                         project("recovered", status="failed"), project("unchanged")]}
+        new = copy.deepcopy(old)
+        rows = {row["id"]: row for row in new["items"]}
+        rows["owner/sdk"]["source"]["current_commit"] = "b"
+        rows["owner/updated"]["source"]["current_commit"] = "b"
+        rows["owner/failed"]["status"] = "failed"
+        rows["owner/recovered"]["status"] = "included"
+        new["items"] = [row for row in new["items"] if row["id"] != "owner/removed"]
+        new["items"].append(project("added"))
+        baseline = {"entries": [{"path": "bin/rebuilt", "sha256": "a"}]}
+        current = {"entries": [{"path": "bin/rebuilt", "sha256": "b"}]}
+        changes = release_changes(new, old, current, baseline)
+        self.assertEqual(changes, [
+            "- **Added:** [owner/added](https://github.com/owner/added), "
+            "[owner/recovered](https://github.com/owner/recovered)",
+            "- **Updated:** [owner/updated](https://github.com/owner/updated)",
+            "- **Rebuilt:** [owner/game](https://github.com/owner/game), "
+            "[owner/rebuilt](https://github.com/owner/rebuilt)",
+            "- **Removed:** [owner/failed](https://github.com/owner/failed), "
+            "[owner/removed](https://github.com/owner/removed)"])
+        # Existing published reports lack edges, but still record dependency revisions.
+        for row in old["items"]:
+            row.pop("dependencies")
+        self.assertEqual(release_changes(new, old, current, baseline), changes)
+        description = publisher.notes(dict(new, collection_commit="abc"), changes)
+        self.assertLess(description.index("What’s changed"), description.index("Which file"))
+
+    def test_missing_baseline_and_unchanged_projects(self):
+        report = {"items": []}
+        content = {"entries": []}
+        self.assertEqual(release_changes(report, None, content, content),
+                         ["Previous release comparison unavailable."])
+        self.assertEqual(release_changes(report, report, content, content),
+                         ["No project changes."])
+
+    def test_changed_dependency_graph_and_file_inventory(self):
+        before = {"items": [{"id": "owner/game", "status": "included",
+                             "dependencies": [], "files": ["bin/game"]}]}
+        after = copy.deepcopy(before)
+        after["items"][0]["dependencies"] = ["owner/sdk"]
+        after["items"].append({"id": "owner/sdk", "status": "skipped",
+                               "source": {"current_commit": "abc"}})
+        content = {"entries": []}
+        expected = ["- **Rebuilt:** [owner/game](https://github.com/owner/game)"]
+        self.assertEqual(release_changes(after, before, content, content), expected)
+        after = copy.deepcopy(before)
+        after["items"][0]["files"] = []
+        self.assertEqual(release_changes(after, before, content, content), expected)
 
 
 class ContentTests(unittest.TestCase):
@@ -454,7 +516,7 @@ class ReleaseTests(unittest.TestCase):
                     self.assertFalse(any("--latest" in call or "--draft=false" in call for call in calls))
 
     def test_unchanged_and_invalid_baseline_and_lookup_errors(self):
-        for mode in ("unchanged", "missing-downloads", "notices-changed", "legacy-baseline",
+        for mode in ("unchanged", "missing-downloads", "notices-changed", "legacy-baseline", "project-updated",
                      "invalid", "lookup-failed", "download-failed"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
@@ -473,23 +535,36 @@ class ReleaseTests(unittest.TestCase):
                     if args[:2] == ("release", "download"):
                         if mode == "download-failed":
                             raise subprocess.CalledProcessError(1, "gh")
+                        if "build-report.json" in args:
+                            previous = json.loads((directory / "build-report.json").read_text())
+                            if mode == "project-updated":
+                                previous["items"][0]["source"] = {"current_commit": "old"}
+                            write_json(Path(args[-1]) / "build-report.json", previous)
+                            return ""
                         baseline = json.loads((directory / "content-manifest.json").read_text())
-                        if mode == "notices-changed":
+                        if mode in {"notices-changed", "project-updated"}:
                             baseline["distribution_sha256"] = "0" * 64
                         elif mode == "legacy-baseline":
                             baseline.pop("distribution_sha256")
                         write_json(Path(args[-1]) / "content-manifest.json", {} if mode == "invalid" else baseline)
+                    if args[:2] == ("release", "create"):
+                        description = Path(args[-1]).read_text()
+                        self.assertIn("What’s changed", description)
+                        if mode == "project-updated":
+                            self.assertIn("- **Updated:** good", description)
+                        elif mode == "missing-downloads":
+                            self.assertIn("Previous release comparison unavailable.", description)
                     return ""
                 with patch.object(publisher, "gh", gh):
                     if mode == "unchanged":
                         self.assertIsNone(publisher.publish(directory, "owner/repo", "123"))
-                    elif mode in {"missing-downloads", "notices-changed", "legacy-baseline"}:
+                    elif mode in {"missing-downloads", "notices-changed", "legacy-baseline", "project-updated"}:
                         self.assertIsNotNone(publisher.publish(directory, "owner/repo", "123"))
                     else:
                         with self.assertRaises((ValueError, subprocess.CalledProcessError)):
                             publisher.publish(directory, "owner/repo", "123")
                 self.assertEqual(any(c[:2] == ("release", "create") for c in calls),
-                                 mode in {"missing-downloads", "notices-changed", "legacy-baseline"})
+                                 mode in {"missing-downloads", "notices-changed", "legacy-baseline", "project-updated"})
 
 
 if __name__ == "__main__":

@@ -94,7 +94,8 @@ def install_and_stage(ids, catalog, zde, staging, report, report_path, *, cache=
     """Failures are isolated per item, including dependency and staging failures."""
     installed = {}
     for dep_id in ids:
-        row = {"id": dep_id, "status": "installing", "stage": "install"}
+        row = {"id": dep_id, "status": "installing", "stage": "install",
+               "dependencies": list(catalog[dep_id]["parents"])}
         report["items"].append(row)
         write_json(report_path, report)
         failed_parents = [p for p in catalog[dep_id]["parents"] if not installed.get(p)]

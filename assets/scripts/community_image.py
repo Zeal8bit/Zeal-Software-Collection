@@ -150,8 +150,57 @@ def tf_tree(entries):
     return "\n".join(lines)
 
 
-def notes(report):
+def project_link(project):
+    name = project.replace("|", "\\|")
+    repository = "/".join(project.split("/")[:2])
+    return f"[{name}](https://github.com/{repository})" if "/" in repository else name
+
+
+def release_changes(report, previous, current, baseline):
+    """Compare delivered projects and their transitive source inputs across releases."""
+    if previous is None:
+        return ["Previous release comparison unavailable."]
+    before = {row["id"]: row for row in previous["items"]}
+    after = {row["id"]: row for row in report["items"]}
+    included_before = {key for key, row in before.items() if row["status"] == "included"}
+    included_after = {key for key, row in after.items() if row["status"] == "included"}
+    groups = {"Added": included_after - included_before, "Updated": set(),
+              "Rebuilt": set(), "Removed": included_before - included_after}
+
+    def revision(row):
+        return row.get("source", {}).get("current_commit")
+
+    def dependencies(project, rows):
+        result, visiting = {}, set()
+        def visit(key):
+            if key in visiting:
+                return
+            visiting.add(key)
+            row = rows.get(key, {})
+            # Older reports lack edges; use the current graph with their recorded revisions.
+            for parent in row.get("dependencies", after.get(key, {}).get("dependencies", [])):
+                result[parent] = revision(rows.get(parent, {}))
+                visit(parent)
+        visit(project)
+        return result
+
+    old_files = {entry["path"]: entry for entry in baseline["entries"]}
+    new_files = {entry["path"]: entry for entry in current["entries"]}
+    for project in included_before & included_after:
+        old, new = before[project], after[project]
+        if revision(old) != revision(new):
+            groups["Updated"].add(project)
+        elif (dependencies(project, before) != dependencies(project, after)
+              or set(old.get("files", [])) != set(new.get("files", []))
+              or any(old_files.get(path) != new_files.get(path) for path in new.get("files", []))):
+            groups["Rebuilt"].add(project)
+    return [f"- **{label}:** " + ", ".join(project_link(key) for key in sorted(projects))
+            for label, projects in groups.items() if projects] or ["No project changes."]
+
+
+def notes(report, changes=None):
     lines = ["Community TF image built from collection commit `" + report["collection_commit"] + "`.",
+             *(["", "### What’s changed", "", *changes] if changes is not None else []),
              "", "### Which file should I download?", "",
              "Download **one** image ZIP for the filesystem capacity you want after flashing:", "",
              "| Download | Extracted image capacity |", "| --- | --- |",
@@ -174,10 +223,7 @@ def notes(report):
     for row in report["items"]:
         if row["status"] != "included":
             continue
-        name = row["id"].replace("|", "\\|")
-        repository = "/".join(row["id"].split("/")[:2])
-        if "/" in repository:
-            name = f"[{name}](https://github.com/{repository})"
+        name = project_link(row["id"])
         files = row.get("files")
         paths = "<br>".join("`t:/" + path.replace("|", "\\|") + "`" for path in files) if files else "—"
         lines.append(f"| {name} | {paths} |")

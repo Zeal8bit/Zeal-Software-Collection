@@ -17,7 +17,7 @@ import sys
 import tempfile
 import zipfile
 
-from community_image import DOWNLOAD_FILES, IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, notes, validate_manifest
+from community_image import DOWNLOAD_FILES, IMAGE_FILES, IMAGE_SIZES_MIB, bundle_lock, notes, release_changes, validate_manifest
 
 from community_licenses import distribution_members, source_archive_url
 
@@ -111,10 +111,18 @@ def _publish(directory, repository, run_id, *, draft=False):
             if baseline.get("distribution_sha256") == current["distribution_sha256"]:
                 print("Image contents and distribution materials unchanged; no release created.")
                 return None
+        changes = ["Comparison unavailable for branch previews."] if draft else ["Initial release."]
+        if baseline_release:
+            previous = None
+            if "build-report.json" in available:
+                gh("release", "download", baseline_release["tag_name"], "--repo", repository,
+                   "--pattern", "build-report.json", "--dir", temporary)
+                previous = json.loads((temporary / "build-report.json").read_text())
+            changes = release_changes(report, previous, current, baseline)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         tag = f"{PREFIX}{stamp}-{run_id}"
         description = temporary / "release-notes.md"
-        description.write_text(notes(report))
+        description.write_text(notes(report, changes))
         gh("release", "create", tag, "--repo", repository, "--draft", "--target",
            report["collection_commit"], "--title", f"Community image {stamp} UTC",
            "--notes-file", description)

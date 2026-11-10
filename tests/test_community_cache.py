@@ -78,6 +78,8 @@ class CacheTests(unittest.TestCase):
         _, report, staging = self.run_build()
         self.assertEqual(self.built, [])
         self.assertTrue(all(row["cache"] == "hit" for row in report["items"]))
+        self.assertEqual({row["id"]: row["dependencies"] for row in report["items"]},
+                         {key: value["parents"] for key, value in self.catalog.items()})
         before = (staging / fingerprint("indirect")).read_text()
         self.versions["lib"] = "two"
         self.built.clear()
