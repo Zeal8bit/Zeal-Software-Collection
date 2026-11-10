@@ -5,11 +5,11 @@ This repository uses [Hugo](https://gohugo.io/) to generate:
 - `_site/index.html`
 - `_site/README.md`
 
-The source of truth for the collection is [`collection.yml`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/collection.yml).
+The source of truth for the collection is [`collection.yml`](collection.yml).
 
 ## Adding a Project
 
-To add a project to the collection, edit [`collection.yml`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/collection.yml) and add a new item under `dependencies:`.
+To add a project to the collection, edit [`collection.yml`](collection.yml) and add a new item under `dependencies:`.
 
 At minimum, each entry should include:
 
@@ -203,11 +203,13 @@ make clean
 
 Important files and directories:
 
-- [`collection.yml`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/collection.yml): the collection data
-- [`layouts/`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/layouts): Hugo templates
-- [`assets/`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/assets): SCSS, JS, and bundled font assets
-- [`_site/`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/_site): generated output
-- [`resources/_gen/`](/Users/david.higgins@konghq.com/Documents/Private/zeal/zeal8bit/Zeal-Software-Collection/resources/_gen): Hugo asset cache
+- [`collection.yml`](collection.yml): the collection data
+- [`layouts/`](layouts): Hugo templates and the site `README.md` template
+- [`assets/`](assets): Hugo asset pipeline inputs (SCSS, JS, bundled font)
+- [`assets/scripts/`](assets/scripts): Python tooling for site generation, the community TF image, and pull request validation
+- `content/`: category pages generated from `collection.yml` (git-ignored)
+- `_site/`: generated site output (git-ignored)
+- `resources/_gen/`: Hugo asset cache (git-ignored)
 
 ## Notes
 
