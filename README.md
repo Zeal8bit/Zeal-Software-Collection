@@ -22,6 +22,7 @@ Projects marked with:
 * [Video Poker](https://github.com/harlock74/zeal-videopoker.git) by [@arcadia6502](https://github.com/harlock74): Video poker-inspired game for Zeal 8-bit Computer
 * [Couples](https://github.com/harlock74/zeal-couples.git) by [@arcadia6502](https://github.com/harlock74): Poker cards memory-inspired game for Zeal 8-bit Computer
 * [Solitaire](https://github.com/harlock74/zeal-solitaire.git) by [@arcadia6502](https://github.com/harlock74): Solitaire-inspired game for Zeal 8-bit Computer
+* [Dungeon of Zeal](https://github.com/harlock74/zeal-dungeon-of-zeal.git) by [@arcadia6502](https://github.com/harlock74): Action exploration game with 8 floors, 72 rooms and a final encounter for the Zeal 8-bit Computer
 * [zealmine](https://github.com/CaPusto/zealmine.git) by [@CaPusto](https://github.com/CaPusto): Minesweeper for Zeal 8-bit Computer
 * [zeal-tetris](https://github.com/CaPusto/zeal-tetris.git) by [@CaPusto](https://github.com/CaPusto): TETRIS for the Zeal 8-bit Computer
 * [Checkers](https://github.com/harlock74/zeal-checkers.git) by [@arcadia6502](https://github.com/harlock74): Checkers for Zeal 8-bit Computer

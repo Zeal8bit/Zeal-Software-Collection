@@ -195,8 +195,8 @@ skipped; removals require no build. The check does not create a TF image. It
 can catch missing dependencies when the build exercises them, but dependencies
 in ZDE's required baseline are always present. Its output is in the Actions log.
 
-`.github/workflows/community-image.yml` runs the same builder on every push to
-`main` and `feature/community-image`, nightly at **07:17 UTC**, and through
+`.github/workflows/community-image.yml` runs the same builder on pushes that change
+`collection.yml` on `main` and `feature/community-image`, nightly at **07:17 UTC**, and through
 **Run workflow** in GitHub Actions once the workflow exists on the default branch.
 Workflow runs are serialized. Reports and logs are retained as workflow artifacts
 for 14 days, including on failed builds when output exists.
