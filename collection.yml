@@ -262,8 +262,6 @@ dependencies:
       - zsol
       - solitaire
 
-
-
   - id: harlock74/zeal-dungeon-of-zeal
     repo: https://github.com/harlock74/zeal-dungeon-of-zeal.git
     build:
@@ -288,7 +286,6 @@ dependencies:
       - zdungeon
       - dungeon
 
-  
   - id: CaPusto/zealmine
     repo: https://github.com/CaPusto/zealmine.git
     depends_on:
@@ -297,7 +294,7 @@ dependencies:
       - zoul0813/zeal-game-dev-kit
     metadata:
       screenshot: https://raw.githubusercontent.com/CaPusto/zealmine/main/docs/screenshot_title.png
-      name: zealmine
+      name: Zealmine
       category:
         - game
       description: Minesweeper for Zeal 8-bit Computer
@@ -312,7 +309,7 @@ dependencies:
     repo: https://github.com/CaPusto/zeal-tetris.git
     metadata:
       screenshot: https://raw.githubusercontent.com/CaPusto/zeal-tetris/main/docs/screenshot.png
-      name: zeal-tetris
+      name: Zeal TETRIS
       category:
         - game
       description: TETRIS for the Zeal 8-bit Computer
