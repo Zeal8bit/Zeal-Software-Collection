@@ -175,6 +175,9 @@ def notes(report):
         if row["status"] != "included":
             continue
         name = row["id"].replace("|", "\\|")
+        repository = "/".join(row["id"].split("/")[:2])
+        if "/" in repository:
+            name = f"[{name}](https://github.com/{repository})"
         files = row.get("files")
         paths = "<br>".join("`t:/" + path.replace("|", "\\|") + "`" for path in files) if files else "—"
         lines.append(f"| {name} | {paths} |")
