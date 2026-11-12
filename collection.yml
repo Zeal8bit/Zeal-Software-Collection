@@ -26,23 +26,298 @@ dependencies:
   #   aliases: <optional list of alternative identifiers/names for this entry, or common abbreviations>
 
   # Games
-  - id: zoul0813/zeal-zfighter
-    repo: https://github.com/zoul0813/zeal-zfighter.git
+  - id: JasonMo1/2048-zos
+    repo: https://github.com/JasonMo1/2048-zos.git
+    metadata:
+      screenshot: https://zeal8bit.com/data/sc-shots/2048.png
+      name: "2048"
+      category:
+        - game
+      description: 2048 for Zeal 8-bit Computer
+      author:
+        name: JasonMo1
+        link: https://github.com/JasonMo1
+    aliases:
+      - "2048"
+
+  - id: zoul0813/zeal-bricked
+    repo: https://github.com/zoul0813/zeal-bricked.git
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
       - zoul0813/zeal-game-dev-kit
     metadata:
-      screenshot: https://zeal8bit.com/data/sc-shots/zfighter.png
-      name: Z Fighter
+      screenshot: https://zeal8bit.com/data/sc-shots/bricked.png
+      name: Bricked
       category:
         - game
-      description: 2D side-scrolling space shooter for Zeal 8-bit Computer
+      description: Arkanoid and Breakout-inspired game for Zeal 8-bit Computer
       author:
         name: zoul0813
         link: https://github.com/zoul0813
     aliases:
-      - zfighter
+      - bricked
+
+  - id: zoul0813/zeal-bubble-keep
+    repo: https://github.com/zoul0813/zeal-bubble-keep.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      commands:
+        - cmake -B build -DEMULATOR=OFF
+        - cmake --build build
+      artifacts:
+        - bin/bubblekeep.bin
+        - bin/bubblekeep.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-bubble-keep/main/screenshots/play.png
+      name: Bubble Keep
+      category:
+        - game
+      description: Trap monsters in bubbles and pop chains across 30 platforming rounds
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - bubble-keep
+
+  - id: harlock74/zeal-checkers
+    repo: https://github.com/harlock74/zeal-checkers.git
+    build:
+      artifacts:
+        - bin/zcheckers
+        - bin/assets
+      root: /games/checkers
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+    metadata:
+      name: Checkers
+      category:
+        - game
+      description: Checkers for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zcheckers
+      - checkers
+
+  - id: Zeal8bit/Zeal-Chip8
+    repo: https://github.com/Zeal8bit/Zeal-Chip8.git
+    build:
+      artifacts:
+        - bin/chip8.bin
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+    metadata:
+      screenshot: https://zeal8bit.com/data/sc-shots/chip8.png
+      name: CHIP-8
+      category:
+        - game
+      description: CHIP-8 emulator for Zeal 8-bit Computer
+      author:
+        name: Zeal8bit
+        link: https://github.com/Zeal8bit
+      flags:
+        - work_in_progress
+    aliases:
+      - chip8
+
+  - id: zoul0813/zeal-circuit-courier
+    repo: https://github.com/zoul0813/zeal-circuit-courier.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      artifacts:
+        - bin/courier.bin
+        - bin/courier.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-circuit-courier/main/screenshots/room16.png
+      name: Circuit Courier
+      category:
+        - game
+      description: Carry and throw data bits to solve circuit-board platforming puzzles
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - circuit-courier
+
+  - id: zoul0813/zeal-circus-seal
+    repo: https://github.com/zoul0813/zeal-circus-seal.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      commands:
+        - cmake -B build -DEMULATOR=OFF
+        - cmake --build build
+      artifacts:
+        - bin/circusseal.bin
+        - bin/circusseal.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-circus-seal/main/screenshots/act1.png
+      name: Circus Seal
+      category:
+        - game
+      description: Bounce a beach ball and pop balloons across twelve circus acts
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - circus-seal
+
+  - id: zoul0813/zeal-closure
+    repo: https://github.com/zoul0813/zeal-closure.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-game-dev-kit
+    metadata:
+      screenshot: https://zeal8bit.com/data/sc-shots/closure.png
+      name: Closure
+      category:
+        - game
+      description: Blockade-inspired game for Zeal 8-bit Computer
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - closure
+
+  - id: harlock74/zeal-couples
+    repo: https://github.com/harlock74/zeal-couples.git
+    build:
+      artifacts:
+        - bin/zcouples
+        - bin/assets
+      root: /games/couples
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+    metadata:
+      screenshot: https://raw.githubusercontent.com/harlock74/zeal-couples/main/docs/screenshots/2.png
+      name: Couples
+      category:
+        - game
+      description: Poker cards memory-inspired game for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zcouples
+      - couples
+
+  - id: harlock74/zeal-dungeon-of-zeal
+    repo: https://github.com/harlock74/zeal-dungeon-of-zeal.git
+    build:
+      artifacts:
+        - bin/zdungeon
+        - bin/assets
+      root: /games/zdungeon
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+    metadata:
+      screenshot: https://raw.githubusercontent.com/harlock74/zeal-dungeon-of-zeal/main/screenshots/1.png
+      name: Dungeon of Zeal
+      category:
+        - game
+      description: Action exploration game with 8 floors, 72 rooms and a final encounter for the Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zdungeon
+      - dungeon
+
+  - id: zoul0813/zeal-floe-slide
+    repo: https://github.com/zoul0813/zeal-floe-slide.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      commands:
+        - cmake -B build -DEMULATOR=OFF
+        - cmake --build build
+      artifacts:
+        - bin/floeslide.bin
+        - bin/floeslide.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-floe-slide/main/screenshots/fast-ice.png
+      name: Floe Slide
+      category:
+        - game
+      description: Slide across ice and collect fish through 32 puzzles in four worlds
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - floe-slide
+
+  - id: TurBoss/Zeal-8bit_conway
+    repo: https://github.com/TurBoss/Zeal-8bit_conway.git
+    metadata:
+      screenshot: https://zeal8bit.com/data/sc-shots/conway.png
+      name: Game of Life
+      category:
+        - game
+      description: Conway's Game of Life for Zeal 8-bit OS
+      author:
+        name: TurBoss
+        link: https://github.com/TurBoss
+    aliases:
+      - life
+      - game-of-life
+
+  - id: zoul0813/zeal-lantern-deep
+    repo: https://github.com/zoul0813/zeal-lantern-deep.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      commands:
+        - cmake -B build -DEMULATOR=OFF
+        - cmake --build build
+      artifacts:
+        - bin/lanterndeep.bin
+        - bin/lanterndeep.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-lantern-deep/main/screenshots/play.png
+      name: Lantern Deep
+      category:
+        - game
+      description: Descend an endless mine shaft while collecting gems and conserving lantern oil
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - lantern-deep
 
   - id: zoul0813/zeal-microbe
     repo: https://github.com/zoul0813/zeal-microbe.git
@@ -62,23 +337,70 @@ dependencies:
     aliases:
       - microbe
 
-  - id: zoul0813/zeal-bricked
-    repo: https://github.com/zoul0813/zeal-bricked.git
+  - id: harlock74/zeal-minigolf
+    repo: https://github.com/harlock74/zeal-minigolf.git
+    build:
+      artifacts:
+        - bin/zgolf
+      root: /games
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
       - zoul0813/zeal-game-dev-kit
     metadata:
-      screenshot: https://zeal8bit.com/data/sc-shots/bricked.png
-      name: Bricked
+      name: Minigolf
       category:
         - game
-      description: Arkanoid and Breakout-inspired game for Zeal 8-bit Computer
+      description: Mini-golf for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zgolf
+      - minigolf
+
+  - id: harlock74/zeal-pongy
+    repo: https://github.com/harlock74/zeal-pongy.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+    metadata:
+      name: Pongy
+      category:
+        - game
+      description: Pong-inspired game for Zeal 8-bit Computer
+      author:
+        name: arcadia6502
+        link: https://github.com/harlock74
+    aliases:
+      - zpong
+      - pongy
+
+  - id: zoul0813/zeal-rooftop-escape
+    repo: https://github.com/zoul0813/zeal-rooftop-escape.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      artifacts:
+        - bin/rooftop.bin
+        - bin/rooftop.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-rooftop-escape/main/screenshots/leg3-pipes.png
+      name: Rooftop Escape
+      category:
+        - game
+      description: Outrun a storm across ten city rooftop courses with jumps, slides and clotheslines
       author:
         name: zoul0813
         link: https://github.com/zoul0813
     aliases:
-      - bricked
+      - rooftop-escape
 
   - id: Zeal8bit/Zeal-VideoBoard-SDK/examples/snake
     repo: https://github.com/Zeal8bit/Zeal-VideoBoard-SDK.git
@@ -105,90 +427,77 @@ dependencies:
     aliases:
       - snake
 
-  - id: JasonMo1/2048-zos
-    repo: https://github.com/JasonMo1/2048-zos.git
-    metadata:
-      screenshot: https://zeal8bit.com/data/sc-shots/2048.png
-      name: "2048"
-      category:
-        - game
-      description: 2048 for Zeal 8-bit Computer
-      author:
-        name: JasonMo1
-        link: https://github.com/JasonMo1
-    aliases:
-      - "2048"
-
-  - id: TurBoss/Zeal-8bit_conway
-    repo: https://github.com/TurBoss/Zeal-8bit_conway.git
-    metadata:
-      screenshot: https://zeal8bit.com/data/sc-shots/conway.png
-      name: Game of Life
-      category:
-        - game
-      description: Conway's Game of Life for Zeal 8-bit OS
-      author:
-        name: TurBoss
-        link: https://github.com/TurBoss
-    aliases:
-      - life
-      - game-of-life
-
-  - id: zoul0813/zeal-closure
-    repo: https://github.com/zoul0813/zeal-closure.git
-    depends_on:
-      - Zeal8bit/Zeal-VideoBoard-SDK
-      - zoul0813/zeal-game-dev-kit
-    metadata:
-      screenshot: https://zeal8bit.com/data/sc-shots/closure.png
-      name: Closure
-      category:
-        - game
-      description: Blockade-inspired game for Zeal 8-bit Computer
-      author:
-        name: zoul0813
-        link: https://github.com/zoul0813
-    aliases:
-      - closure
-
-  - id: Zeal8bit/Zeal-Chip8
-    repo: https://github.com/Zeal8bit/Zeal-Chip8.git
+  - id: harlock74/zeal-solitaire
+    repo: https://github.com/harlock74/zeal-solitaire.git
     build:
       artifacts:
-        - bin/chip8.bin
-    depends_on:
-      - Zeal8bit/Zeal-VideoBoard-SDK
-    metadata:
-      screenshot: https://zeal8bit.com/data/sc-shots/chip8.png
-      name: CHIP-8
-      category:
-        - game
-      description: CHIP-8 emulator for Zeal 8-bit Computer
-      author:
-        name: Zeal8bit
-        link: https://github.com/Zeal8bit
-      flags:
-        - work_in_progress
-    aliases:
-      - chip8
-
-  - id: harlock74/zeal-pongy
-    repo: https://github.com/harlock74/zeal-pongy.git
+        - bin/zsol
+        - bin/assets
+      root: /games/solitaire
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
       - zoul0813/zeal-game-dev-kit
     metadata:
-      name: Pongy
+      screenshot: https://raw.githubusercontent.com/harlock74/zeal-solitaire/main/docs/screenshots/2.png
+      name: Solitaire
       category:
         - game
-      description: Pong-inspired game for Zeal 8-bit Computer
+      description: Solitaire-inspired game for Zeal 8-bit Computer
       author:
         name: arcadia6502
         link: https://github.com/harlock74
     aliases:
-      - zpong
-      - pongy
+      - zsol
+      - solitaire
+
+  - id: zoul0813/zeal-tidepup
+    repo: https://github.com/zoul0813/zeal-tidepup.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+      - zoul0813/zeal-archiver
+    build:
+      tool: cmake
+      artifacts:
+        - bin/tidepup.bin
+        - bin/tidepup.zar
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-tidepup/main/screenshots/shore2.png
+      name: Tidepup
+      category:
+        - game
+      description: Help a seal pup collect fish and bring them home across four shores
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - tidepup
+
+  - id: zoul0813/zeal-under-the-ice
+    repo: https://github.com/zoul0813/zeal-under-the-ice.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+    build:
+      tool: cmake
+      artifacts:
+        - bin/underice.bin
+      root: /games
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-under-the-ice/main/screenshots/hunt.png
+      name: Under the Ice
+      category:
+        - game
+      description: Dive beneath drifting ice to catch fish and return for air
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - under-the-ice
 
   - id: harlock74/zeal-videopoker
     repo: https://github.com/harlock74/zeal-videopoker.git
@@ -214,77 +523,38 @@ dependencies:
       - zpoker
       - poker
 
-  - id: harlock74/zeal-couples
-    repo: https://github.com/harlock74/zeal-couples.git
-    build:
-      artifacts:
-        - bin/zcouples
-        - bin/assets
-      root: /games/couples
+  - id: zoul0813/zeal-zfighter
+    repo: https://github.com/zoul0813/zeal-zfighter.git
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
       - zoul0813/zeal-game-dev-kit
     metadata:
-      screenshot: https://raw.githubusercontent.com/harlock74/zeal-couples/main/docs/screenshots/2.png
-      name: Couples
+      screenshot: https://zeal8bit.com/data/sc-shots/zfighter.png
+      name: Z Fighter
       category:
         - game
-      description: Poker cards memory-inspired game for Zeal 8-bit Computer
+      description: 2D side-scrolling space shooter for Zeal 8-bit Computer
       author:
-        name: arcadia6502
-        link: https://github.com/harlock74
+        name: zoul0813
+        link: https://github.com/zoul0813
     aliases:
-      - zcouples
-      - couples
+      - zfighter
 
-  - id: harlock74/zeal-solitaire
-    repo: https://github.com/harlock74/zeal-solitaire.git
-    build:
-      artifacts:
-        - bin/zsol
-        - bin/assets
-      root: /games/solitaire
-    depends_on:
-      - Zeal8bit/Zeal-VideoBoard-SDK
-      - zoul0813/zeal-coreutils
-      - zoul0813/zeal-game-dev-kit
+  - id: CaPusto/zeal-tetris
+    repo: https://github.com/CaPusto/zeal-tetris.git
     metadata:
-      screenshot: https://raw.githubusercontent.com/harlock74/zeal-solitaire/main/docs/screenshots/2.png
-      name: Solitaire
+      screenshot: https://raw.githubusercontent.com/CaPusto/zeal-tetris/main/docs/screenshot.png
+      name: Zeal TETRIS
       category:
         - game
-      description: Solitaire-inspired game for Zeal 8-bit Computer
+      description: TETRIS for the Zeal 8-bit Computer
       author:
-        name: arcadia6502
-        link: https://github.com/harlock74
+        name: CaPusto
+        link: https://github.com/CaPusto
     aliases:
-      - zsol
-      - solitaire
-
-  - id: harlock74/zeal-dungeon-of-zeal
-    repo: https://github.com/harlock74/zeal-dungeon-of-zeal.git
-    build:
-      artifacts:
-        - bin/zdungeon
-        - bin/assets
-      root: /games/zdungeon
-    depends_on:
-      - Zeal8bit/Zeal-VideoBoard-SDK
-      - zoul0813/zeal-coreutils
-      - zoul0813/zeal-game-dev-kit
-    metadata:
-      screenshot: https://raw.githubusercontent.com/harlock74/zeal-dungeon-of-zeal/main/screenshots/1.png
-      name: Dungeon of Zeal
-      category:
-        - game
-      description: Action exploration game with 8 floors, 72 rooms and a final encounter for the Zeal 8-bit Computer
-      author:
-        name: arcadia6502
-        link: https://github.com/harlock74
-    aliases:
-      - zdungeon
-      - dungeon
+      - zeal-tetris
+      - tetris
 
   - id: CaPusto/zealmine
     repo: https://github.com/CaPusto/zealmine.git
@@ -304,66 +574,6 @@ dependencies:
     aliases:
       - zealmine
       - minesweeper
-
-  - id: CaPusto/zeal-tetris
-    repo: https://github.com/CaPusto/zeal-tetris.git
-    metadata:
-      screenshot: https://raw.githubusercontent.com/CaPusto/zeal-tetris/main/docs/screenshot.png
-      name: Zeal TETRIS
-      category:
-        - game
-      description: TETRIS for the Zeal 8-bit Computer
-      author:
-        name: CaPusto
-        link: https://github.com/CaPusto
-    aliases:
-      - zeal-tetris
-      - tetris
-
-  - id: harlock74/zeal-checkers
-    repo: https://github.com/harlock74/zeal-checkers.git
-    build:
-      artifacts:
-        - bin/zcheckers
-        - bin/assets
-      root: /games/checkers
-    depends_on:
-      - Zeal8bit/Zeal-VideoBoard-SDK
-      - zoul0813/zeal-coreutils
-      - zoul0813/zeal-game-dev-kit
-    metadata:
-      name: Checkers
-      category:
-        - game
-      description: Checkers for Zeal 8-bit Computer
-      author:
-        name: arcadia6502
-        link: https://github.com/harlock74
-    aliases:
-      - zcheckers
-      - checkers
-
-  - id: harlock74/zeal-minigolf
-    repo: https://github.com/harlock74/zeal-minigolf.git
-    build:
-      artifacts:
-        - bin/zgolf
-      root: /games
-    depends_on:
-      - Zeal8bit/Zeal-VideoBoard-SDK
-      - zoul0813/zeal-coreutils
-      - zoul0813/zeal-game-dev-kit
-    metadata:
-      name: Minigolf
-      category:
-        - game
-      description: Mini-golf for Zeal 8-bit Computer
-      author:
-        name: arcadia6502
-        link: https://github.com/harlock74
-    aliases:
-      - zgolf
-      - minigolf
 
   # Demos
   - id: zoul0813/zeal-boing

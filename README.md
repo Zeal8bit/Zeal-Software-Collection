@@ -10,23 +10,31 @@ Projects marked with:
 * ⚠️ involve a *Work In Progress* state, may not be usable yet.
 
 ## 🕹️ Game
-* [Z Fighter](https://github.com/zoul0813/zeal-zfighter.git) by [@zoul0813](https://github.com/zoul0813): 2D side-scrolling space shooter for Zeal 8-bit Computer
-* [Microbe](https://github.com/zoul0813/zeal-microbe.git) by [@zoul0813](https://github.com/zoul0813): Space Invaders-inspired game for Zeal 8-bit Computer
-* [Bricked](https://github.com/zoul0813/zeal-bricked.git) by [@zoul0813](https://github.com/zoul0813): Arkanoid and Breakout-inspired game for Zeal 8-bit Computer
-* [Snake](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK.git) by [@Zeal8bit](https://github.com/Zeal8bit): Snake example currently hosted inside the Zeal VideoBoard SDK
 * [2048](https://github.com/JasonMo1/2048-zos.git) by [@JasonMo1](https://github.com/JasonMo1): 2048 for Zeal 8-bit Computer
-* [Game of Life](https://github.com/TurBoss/Zeal-8bit_conway.git) by [@TurBoss](https://github.com/TurBoss): Conway's Game of Life for Zeal 8-bit OS
-* [Closure](https://github.com/zoul0813/zeal-closure.git) by [@zoul0813](https://github.com/zoul0813): Blockade-inspired game for Zeal 8-bit Computer
-* [CHIP-8](https://github.com/Zeal8bit/Zeal-Chip8.git) by [@Zeal8bit](https://github.com/Zeal8bit) ⚠️: CHIP-8 emulator for Zeal 8-bit Computer
-* [Pongy](https://github.com/harlock74/zeal-pongy.git) by [@arcadia6502](https://github.com/harlock74): Pong-inspired game for Zeal 8-bit Computer
-* [Video Poker](https://github.com/harlock74/zeal-videopoker.git) by [@arcadia6502](https://github.com/harlock74): Video poker-inspired game for Zeal 8-bit Computer
-* [Couples](https://github.com/harlock74/zeal-couples.git) by [@arcadia6502](https://github.com/harlock74): Poker cards memory-inspired game for Zeal 8-bit Computer
-* [Solitaire](https://github.com/harlock74/zeal-solitaire.git) by [@arcadia6502](https://github.com/harlock74): Solitaire-inspired game for Zeal 8-bit Computer
-* [Dungeon of Zeal](https://github.com/harlock74/zeal-dungeon-of-zeal.git) by [@arcadia6502](https://github.com/harlock74): Action exploration game with 8 floors, 72 rooms and a final encounter for the Zeal 8-bit Computer
-* [Zealmine](https://github.com/CaPusto/zealmine.git) by [@CaPusto](https://github.com/CaPusto): Minesweeper for Zeal 8-bit Computer
-* [Zeal TETRIS](https://github.com/CaPusto/zeal-tetris.git) by [@CaPusto](https://github.com/CaPusto): TETRIS for the Zeal 8-bit Computer
+* [Bricked](https://github.com/zoul0813/zeal-bricked.git) by [@zoul0813](https://github.com/zoul0813): Arkanoid and Breakout-inspired game for Zeal 8-bit Computer
+* [Bubble Keep](https://github.com/zoul0813/zeal-bubble-keep.git) by [@zoul0813](https://github.com/zoul0813): Trap monsters in bubbles and pop chains across 30 platforming rounds
 * [Checkers](https://github.com/harlock74/zeal-checkers.git) by [@arcadia6502](https://github.com/harlock74): Checkers for Zeal 8-bit Computer
+* [CHIP-8](https://github.com/Zeal8bit/Zeal-Chip8.git) by [@Zeal8bit](https://github.com/Zeal8bit) ⚠️: CHIP-8 emulator for Zeal 8-bit Computer
+* [Circuit Courier](https://github.com/zoul0813/zeal-circuit-courier.git) by [@zoul0813](https://github.com/zoul0813): Carry and throw data bits to solve circuit-board platforming puzzles
+* [Circus Seal](https://github.com/zoul0813/zeal-circus-seal.git) by [@zoul0813](https://github.com/zoul0813): Bounce a beach ball and pop balloons across twelve circus acts
+* [Closure](https://github.com/zoul0813/zeal-closure.git) by [@zoul0813](https://github.com/zoul0813): Blockade-inspired game for Zeal 8-bit Computer
+* [Couples](https://github.com/harlock74/zeal-couples.git) by [@arcadia6502](https://github.com/harlock74): Poker cards memory-inspired game for Zeal 8-bit Computer
+* [Dungeon of Zeal](https://github.com/harlock74/zeal-dungeon-of-zeal.git) by [@arcadia6502](https://github.com/harlock74): Action exploration game with 8 floors, 72 rooms and a final encounter for the Zeal 8-bit Computer
+* [Floe Slide](https://github.com/zoul0813/zeal-floe-slide.git) by [@zoul0813](https://github.com/zoul0813): Slide across ice and collect fish through 32 puzzles in four worlds
+* [Game of Life](https://github.com/TurBoss/Zeal-8bit_conway.git) by [@TurBoss](https://github.com/TurBoss): Conway's Game of Life for Zeal 8-bit OS
+* [Lantern Deep](https://github.com/zoul0813/zeal-lantern-deep.git) by [@zoul0813](https://github.com/zoul0813): Descend an endless mine shaft while collecting gems and conserving lantern oil
+* [Microbe](https://github.com/zoul0813/zeal-microbe.git) by [@zoul0813](https://github.com/zoul0813): Space Invaders-inspired game for Zeal 8-bit Computer
 * [Minigolf](https://github.com/harlock74/zeal-minigolf.git) by [@arcadia6502](https://github.com/harlock74): Mini-golf for Zeal 8-bit Computer
+* [Pongy](https://github.com/harlock74/zeal-pongy.git) by [@arcadia6502](https://github.com/harlock74): Pong-inspired game for Zeal 8-bit Computer
+* [Rooftop Escape](https://github.com/zoul0813/zeal-rooftop-escape.git) by [@zoul0813](https://github.com/zoul0813): Outrun a storm across ten city rooftop courses with jumps, slides and clotheslines
+* [Snake](https://github.com/Zeal8bit/Zeal-VideoBoard-SDK.git) by [@Zeal8bit](https://github.com/Zeal8bit): Snake example currently hosted inside the Zeal VideoBoard SDK
+* [Solitaire](https://github.com/harlock74/zeal-solitaire.git) by [@arcadia6502](https://github.com/harlock74): Solitaire-inspired game for Zeal 8-bit Computer
+* [Tidepup](https://github.com/zoul0813/zeal-tidepup.git) by [@zoul0813](https://github.com/zoul0813): Help a seal pup collect fish and bring them home across four shores
+* [Under the Ice](https://github.com/zoul0813/zeal-under-the-ice.git) by [@zoul0813](https://github.com/zoul0813): Dive beneath drifting ice to catch fish and return for air
+* [Video Poker](https://github.com/harlock74/zeal-videopoker.git) by [@arcadia6502](https://github.com/harlock74): Video poker-inspired game for Zeal 8-bit Computer
+* [Z Fighter](https://github.com/zoul0813/zeal-zfighter.git) by [@zoul0813](https://github.com/zoul0813): 2D side-scrolling space shooter for Zeal 8-bit Computer
+* [Zeal TETRIS](https://github.com/CaPusto/zeal-tetris.git) by [@CaPusto](https://github.com/CaPusto): TETRIS for the Zeal 8-bit Computer
+* [Zealmine](https://github.com/CaPusto/zealmine.git) by [@CaPusto](https://github.com/CaPusto): Minesweeper for Zeal 8-bit Computer
 
 ## 💾 Demo
 * [Zeal Boing](https://github.com/zoul0813/zeal-boing.git) by [@zoul0813](https://github.com/zoul0813): Boing Ball-inspired demo for Zeal 8-bit Computer
