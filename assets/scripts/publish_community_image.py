@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish a verified community build only when its image-visible contents changed.
+"""Publish a verified community build with a changelog of source commit changes.
 
 Requires GitHub CLI (gh) and GH_TOKEN. The local builder never needs either.
 """
@@ -34,14 +34,6 @@ def gh(*args):
 def latest_release(releases):
     candidates = [r for r in releases if not r["draft"] and r["tag_name"].startswith(PREFIX)]
     return max(candidates, key=lambda r: r["published_at"], default=None)
-
-
-def changed(current, baseline):
-    validate_manifest(current)
-    if baseline is None:
-        return True
-    validate_manifest(baseline)
-    return current["sha256"] != baseline["sha256"]
 
 
 def publish(directory, repository, run_id, *, draft=False):
@@ -95,22 +87,13 @@ def _publish(directory, repository, run_id, *, draft=False):
         raise ValueError("Content manifest does not match the license notices")
     baseline_release = None
     if not draft:
-        # Branch previews do not depend on a published baseline or content changes.
+        # Branch previews do not depend on a published baseline.
         # --slurp preserves all paginated arrays; API errors remain fatal.
         pages = json.loads(gh("api", "--paginate", "--slurp", f"repos/{repository}/releases?per_page=100"))
         baseline_release = latest_release([r for page in pages for r in page])
-    baseline = None
     with tempfile.TemporaryDirectory(prefix="community-release-") as temporary:
         temporary = Path(temporary)
-        if baseline_release:
-            gh("release", "download", baseline_release["tag_name"], "--repo", repository,
-               "--pattern", "content-manifest.json", "--dir", temporary)
-            baseline = json.loads((temporary / "content-manifest.json").read_text())
         available = {asset["name"] for asset in baseline_release.get("assets", [])} if baseline_release else set()
-        if not draft and not changed(current, baseline) and set(ASSETS) <= available:
-            if baseline.get("distribution_sha256") == current["distribution_sha256"]:
-                print("Image contents and distribution materials unchanged; no release created.")
-                return None
         changes = ["Comparison unavailable for branch previews."] if draft else ["Initial release."]
         if baseline_release:
             previous = None
@@ -118,7 +101,7 @@ def _publish(directory, repository, run_id, *, draft=False):
                 gh("release", "download", baseline_release["tag_name"], "--repo", repository,
                    "--pattern", "build-report.json", "--dir", temporary)
                 previous = json.loads((temporary / "build-report.json").read_text())
-            changes = release_changes(report, previous, current, baseline)
+            changes = release_changes(report, previous)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         tag = f"{PREFIX}{stamp}-{run_id}"
         description = temporary / "release-notes.md"

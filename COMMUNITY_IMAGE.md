@@ -96,7 +96,7 @@ apply changes to `collection.yml`.
 The **Community TF image** workflow runs when `collection.yml` changes on `main`
 or `feature/community-image`, nightly at **07:17 UTC**, or manually through
 **Actions → Community TF image → Run workflow**. Branch builds create draft
-releases. Main builds publish when release contents change.
+releases. Main builds publish when build inputs change.
 
 For failed runs, inspect the Actions log and download the `community-image`
 artifact. Artifacts are retained for 14 days.

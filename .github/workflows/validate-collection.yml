@@ -10,6 +10,7 @@ on:
       - assets/scripts/community_licenses.py
       - assets/scripts/community_cache.py
       - assets/scripts/community_kernels.py
+      - assets/scripts/community_inputs.py
       - assets/scripts/publish_community_image.py
       - .github/workflows/community-image.yml
       - tests/**

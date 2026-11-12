@@ -22,7 +22,7 @@ import publish_community_image as publisher
 
 
 class ChangelogTests(unittest.TestCase):
-    def test_project_changes_include_transitive_dependencies_and_changed_files(self):
+    def test_changelog_lists_only_projects_with_their_own_commit_changes(self):
         def project(name, revision="a", dependencies=(), status="included"):
             return {"id": "owner/" + name, "status": status,
                     "stage": "install", "reason": "failed",
@@ -42,45 +42,43 @@ class ChangelogTests(unittest.TestCase):
         rows["owner/recovered"]["status"] = "included"
         new["items"] = [row for row in new["items"] if row["id"] != "owner/removed"]
         new["items"].append(project("added"))
-        baseline = {"entries": [{"path": "bin/rebuilt", "sha256": "a"}]}
-        current = {"entries": [{"path": "bin/rebuilt", "sha256": "b"}]}
-        changes = release_changes(new, old, current, baseline)
+        rows["owner/rebuilt"]["files"] = ["bin/different"]
+        changes = release_changes(new, old)
         self.assertEqual(changes, [
-            "- **Added:** [owner/added](https://github.com/owner/added), "
-            "[owner/recovered](https://github.com/owner/recovered)",
-            "- **Updated:** [owner/updated](https://github.com/owner/updated)",
-            "- **Rebuilt:** [owner/game](https://github.com/owner/game), "
-            "[owner/rebuilt](https://github.com/owner/rebuilt)",
-            "- **Removed:** [owner/failed](https://github.com/owner/failed), "
-            "[owner/removed](https://github.com/owner/removed)"])
-        # Existing published reports lack edges, but still record dependency revisions.
+            "- **Added:** [owner/added](https://github.com/owner/added)",
+            "- **Updated:** [owner/sdk](https://github.com/owner/sdk) "
+            "([a → b](https://github.com/owner/sdk/compare/a...b)), "
+            "[owner/updated](https://github.com/owner/updated) "
+            "([a → b](https://github.com/owner/updated/compare/a...b))",
+            "- **Removed:** [owner/removed](https://github.com/owner/removed)"])
         for row in old["items"]:
             row.pop("dependencies")
-        self.assertEqual(release_changes(new, old, current, baseline), changes)
+        self.assertEqual(release_changes(new, old), changes)
         description = publisher.notes(dict(new, collection_commit="abc"), changes)
         self.assertLess(description.index("What’s changed"), description.index("Which file"))
 
     def test_missing_baseline_and_unchanged_projects(self):
         report = {"items": []}
-        content = {"entries": []}
-        self.assertEqual(release_changes(report, None, content, content),
+        self.assertEqual(release_changes(report, None),
                          ["Previous release comparison unavailable."])
-        self.assertEqual(release_changes(report, report, content, content),
-                         ["No project changes."])
+        self.assertEqual(release_changes(report, report),
+                         ["No project commit changes."])
 
-    def test_changed_dependency_graph_and_file_inventory(self):
+    def test_changed_dependency_graph_and_file_inventory_do_not_imply_new_commits(self):
         before = {"items": [{"id": "owner/game", "status": "included",
                              "dependencies": [], "files": ["bin/game"]}]}
         after = copy.deepcopy(before)
         after["items"][0]["dependencies"] = ["owner/sdk"]
-        after["items"].append({"id": "owner/sdk", "status": "skipped",
-                               "source": {"current_commit": "abc"}})
-        content = {"entries": []}
-        expected = ["- **Rebuilt:** [owner/game](https://github.com/owner/game)"]
-        self.assertEqual(release_changes(after, before, content, content), expected)
-        after = copy.deepcopy(before)
         after["items"][0]["files"] = []
-        self.assertEqual(release_changes(after, before, content, content), expected)
+        self.assertEqual(release_changes(after, before), ["No project commit changes."])
+
+    def test_zde_commit_changes_are_listed(self):
+        before = {"items": [], "zde_commit": "a" * 40}
+        after = {"items": [], "zde_commit": "b" * 40}
+        changes = release_changes(after, before)
+        self.assertEqual(len(changes), 1)
+        self.assertIn("**Updated:** [zoul0813/zeal-dev-environment]", changes[0])
+        self.assertIn(f"/compare/{'a' * 40}...{'b' * 40}", changes[0])
 
 
 class ContentTests(unittest.TestCase):
@@ -121,17 +119,16 @@ class ContentTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 manifest(root)
 
-    def test_bad_baseline_rejected(self):
+    def test_bad_manifest_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             value = manifest(Path(temporary))[0]
-            self.assertTrue(publisher.changed(value, None))
-            self.assertFalse(publisher.changed(value, value))
+            validate_manifest(value)
             bad = copy.deepcopy(value)
             bad["sha256"] = "bad"
             with self.assertRaises(ValueError):
-                publisher.changed(value, bad)
+                validate_manifest(bad)
             with self.assertRaises(ValueError):
-                publisher.changed(value, {})
+                validate_manifest({})
 
 
 class BundleTests(unittest.TestCase):
@@ -515,13 +512,19 @@ class ReleaseTests(unittest.TestCase):
                 if draft:
                     self.assertFalse(any("--latest" in call or "--draft=false" in call for call in calls))
 
-    def test_unchanged_and_invalid_baseline_and_lookup_errors(self):
-        for mode in ("unchanged", "missing-downloads", "notices-changed", "legacy-baseline", "project-updated",
-                     "invalid", "lookup-failed", "download-failed"):
+    def test_publication_uses_only_previous_commits_and_publishes_identical_outputs(self):
+        for mode in ("identical-output", "missing-report", "project-updated",
+                     "lookup-failed", "download-failed", "invalid-report"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary)
                 (directory / "contents").mkdir()
                 self.assets(directory)
+                if mode == "project-updated":
+                    report = json.loads((directory / "build-report.json").read_text())
+                    report["items"].append({"id": "owner/sdk", "status": "skipped",
+                                            "reason": "Staging disabled",
+                                            "source": {"current_commit": "b" * 40}})
+                    write_json(directory / "build-report.json", report)
                 calls = []
                 def gh(*args):
                     calls.append(args)
@@ -530,41 +533,37 @@ class ReleaseTests(unittest.TestCase):
                             raise subprocess.CalledProcessError(1, "gh")
                         return json.dumps([[{"draft": False, "tag_name": publisher.PREFIX + "old",
                                              "published_at": "2026-01-01",
-                                             "assets": [] if mode == "missing-downloads" else
+                                             "assets": [] if mode == "missing-report" else
                                              [{"name": name} for name in publisher.ASSETS]}]])
                     if args[:2] == ("release", "download"):
                         if mode == "download-failed":
                             raise subprocess.CalledProcessError(1, "gh")
-                        if "build-report.json" in args:
-                            previous = json.loads((directory / "build-report.json").read_text())
-                            if mode == "project-updated":
-                                previous["items"][0]["source"] = {"current_commit": "old"}
-                            write_json(Path(args[-1]) / "build-report.json", previous)
-                            return ""
-                        baseline = json.loads((directory / "content-manifest.json").read_text())
-                        if mode in {"notices-changed", "project-updated"}:
-                            baseline["distribution_sha256"] = "0" * 64
-                        elif mode == "legacy-baseline":
-                            baseline.pop("distribution_sha256")
-                        write_json(Path(args[-1]) / "content-manifest.json", {} if mode == "invalid" else baseline)
+                        self.assertIn("build-report.json", args)
+                        self.assertNotIn("content-manifest.json", args)
+                        previous = json.loads((directory / "build-report.json").read_text())
+                        if mode == "project-updated":
+                            previous["items"][-1]["source"]["current_commit"] = "a" * 40
+                        write_json(Path(args[-1]) / "build-report.json",
+                                   {} if mode == "invalid-report" else previous)
                     if args[:2] == ("release", "create"):
                         description = Path(args[-1]).read_text()
                         self.assertIn("What’s changed", description)
                         if mode == "project-updated":
-                            self.assertIn("- **Updated:** good", description)
-                        elif mode == "missing-downloads":
+                            self.assertIn("- **Updated:** [owner/sdk]", description)
+                            self.assertIn(f"/compare/{'a' * 40}...{'b' * 40}", description)
+                        elif mode == "missing-report":
                             self.assertIn("Previous release comparison unavailable.", description)
+                        else:
+                            self.assertIn("No project commit changes.", description)
                     return ""
                 with patch.object(publisher, "gh", gh):
-                    if mode == "unchanged":
-                        self.assertIsNone(publisher.publish(directory, "owner/repo", "123"))
-                    elif mode in {"missing-downloads", "notices-changed", "legacy-baseline", "project-updated"}:
+                    if mode in {"identical-output", "missing-report", "project-updated"}:
                         self.assertIsNotNone(publisher.publish(directory, "owner/repo", "123"))
                     else:
-                        with self.assertRaises((ValueError, subprocess.CalledProcessError)):
+                        with self.assertRaises((ValueError, KeyError, subprocess.CalledProcessError)):
                             publisher.publish(directory, "owner/repo", "123")
                 self.assertEqual(any(c[:2] == ("release", "create") for c in calls),
-                                 mode in {"missing-downloads", "notices-changed", "legacy-baseline", "project-updated"})
+                                 mode in {"identical-output", "missing-report", "project-updated"})
 
 
 if __name__ == "__main__":

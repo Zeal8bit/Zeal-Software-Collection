@@ -156,46 +156,34 @@ def project_link(project):
     return f"[{name}](https://github.com/{repository})" if "/" in repository else name
 
 
-def release_changes(report, previous, current, baseline):
-    """Compare delivered projects and their transitive source inputs across releases."""
+def release_changes(report, previous):
+    """List projects whose own commits changed since the previous release."""
     if previous is None:
         return ["Previous release comparison unavailable."]
-    before = {row["id"]: row for row in previous["items"]}
-    after = {row["id"]: row for row in report["items"]}
-    included_before = {key for key, row in before.items() if row["status"] == "included"}
-    included_after = {key for key, row in after.items() if row["status"] == "included"}
-    groups = {"Added": included_after - included_before, "Updated": set(),
-              "Rebuilt": set(), "Removed": included_before - included_after}
 
-    def revision(row):
-        return row.get("source", {}).get("current_commit")
-
-    def dependencies(project, rows):
-        result, visiting = {}, set()
-        def visit(key):
-            if key in visiting:
-                return
-            visiting.add(key)
-            row = rows.get(key, {})
-            # Older reports lack edges; use the current graph with their recorded revisions.
-            for parent in row.get("dependencies", after.get(key, {}).get("dependencies", [])):
-                result[parent] = revision(rows.get(parent, {}))
-                visit(parent)
-        visit(project)
+    def revisions(build):
+        result = {row["id"]: row.get("source", {}).get("current_commit")
+                  for row in build["items"]}
+        if build.get("zde_commit"):
+            result["zoul0813/zeal-dev-environment"] = build["zde_commit"]
         return result
 
-    old_files = {entry["path"]: entry for entry in baseline["entries"]}
-    new_files = {entry["path"]: entry for entry in current["entries"]}
-    for project in included_before & included_after:
-        old, new = before[project], after[project]
-        if revision(old) != revision(new):
-            groups["Updated"].add(project)
-        elif (dependencies(project, before) != dependencies(project, after)
-              or set(old.get("files", [])) != set(new.get("files", []))
-              or any(old_files.get(path) != new_files.get(path) for path in new.get("files", []))):
-            groups["Rebuilt"].add(project)
-    return [f"- **{label}:** " + ", ".join(project_link(key) for key in sorted(projects))
-            for label, projects in groups.items() if projects] or ["No project changes."]
+    before, after = revisions(previous), revisions(report)
+    groups = {"Added": after.keys() - before.keys(),
+              "Updated": {key for key in before.keys() & after.keys()
+                          if after[key] and before[key] != after[key]},
+              "Removed": before.keys() - after.keys()}
+
+    def describe(project, label):
+        link = project_link(project)
+        if label == "Updated" and before[project] and "/" in project:
+            repository = "/".join(project.split("/")[:2])
+            old, new = before[project], after[project]
+            link += f" ([{old[:7]} → {new[:7]}](https://github.com/{repository}/compare/{old}...{new}))"
+        return link
+
+    return [f"- **{label}:** " + ", ".join(describe(key, label) for key in sorted(projects))
+            for label, projects in groups.items() if projects] or ["No project commit changes."]
 
 
 def notes(report, changes=None):

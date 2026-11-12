@@ -20,6 +20,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    outputs:
+      changed: ${{ steps.inputs.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,26 +31,31 @@ jobs:
           python-version: '3.12'
       - name: Install builder prerequisites
         run: python3 -m pip install 'PyYAML==6.0.3'
-      - name: Test community image scripts
-        run: python3 -m unittest discover -s tests -v
-      - name: Restore successful project builds
-        id: build-cache
+      - name: Restore last successful build inputs
         uses: actions/cache/restore@v4
         with:
-          path: tmp/community-image-cache/snapshot/
-          key: community-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tmp/community-inputs/baseline.json
+          enableCrossOsArchive: true
+          key: community-inputs-v1-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            community-build-v1-${{ runner.os }}-${{ runner.arch }}-
+            community-inputs-v1-
+      - name: Check upstream commits and build inputs
+        id: inputs
+        run: python3 assets/scripts/community_inputs.py
+      - name: Test community image scripts
+        if: steps.inputs.outputs.changed == 'true'
+        run: python3 -m unittest discover -s tests -v
       - name: Build and verify community image
-        run: python3 assets/scripts/build_community_image.py
-      - name: Cache successful project builds
-        if: always() && steps.build-cache.outcome == 'success'
-        uses: actions/cache/save@v4
-        with:
-          path: tmp/community-image-cache/snapshot/
-          key: ${{ steps.build-cache.outputs.cache-primary-key }}
+        if: steps.inputs.outputs.changed == 'true'
+        run: python3 assets/scripts/build_community_image.py --no-cache
+      - name: Attach checked build inputs
+        if: steps.inputs.outputs.changed == 'true'
+        run: |
+          if [ -f tmp/community-inputs/current.json ]; then
+            cp tmp/community-inputs/current.json dist/community/build-inputs.json
+          fi
       - name: Save image and build diagnostics
-        if: always()
+        if: always() && steps.inputs.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: community-image
@@ -58,6 +65,7 @@ jobs:
 
   publish:
     needs: build
+    if: needs.build.outputs.changed == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -72,7 +80,7 @@ jobs:
         with:
           name: community-image
           path: dist/community
-      - name: Publish changed main images or create branch draft
+      - name: Publish main image or create branch draft
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -81,3 +89,13 @@ jobs:
             args+=(--draft)
           fi
           python3 assets/scripts/publish_community_image.py "${args[@]}"
+      - name: Record successful build inputs
+        id: inputs
+        run: python3 assets/scripts/community_inputs.py --record --current dist/community/build-inputs.json
+      - name: Cache successful build inputs
+        if: steps.inputs.outputs.recorded == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: tmp/community-inputs/baseline.json
+          enableCrossOsArchive: true
+          key: community-inputs-v1-${{ github.run_id }}-${{ github.run_attempt }}
