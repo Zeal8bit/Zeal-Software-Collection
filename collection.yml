@@ -575,6 +575,25 @@ dependencies:
       - zealmine
       - minesweeper
 
+  - id: CaPusto/zeal-xonix
+    repo: https://github.com/CaPusto/zeal-xonix.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+      - zoul0813/zeal-coreutils
+      - zoul0813/zeal-game-dev-kit
+    metadata:
+      screenshot: https://raw.githubusercontent.com/CaPusto/zeal-xonix/main/docs/RetroXonixNightGamingRoom.png
+      name: zeal-xonix
+      category:
+        - game
+      description: A xonix game for Zeal 8-bit Computer
+      author:
+        name: CaPusto
+        link: https://github.com/CaPusto
+    aliases:
+      - zeal-xonix
+      - xonix
+
   # Demos
   - id: zoul0813/zeal-boing
     repo: https://github.com/zoul0813/zeal-boing.git
