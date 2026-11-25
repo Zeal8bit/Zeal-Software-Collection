@@ -577,6 +577,14 @@ dependencies:
 
   - id: CaPusto/zeal-lines
     repo: https://github.com/CaPusto/zeal-lines.git
+    build:
+      artifacts:
+        - bin/zeal-lines.bin
+        - bin/zeal-tiles.dat
+        - bin/splash.ztm
+        - bin/splash.ztp
+        - bin/splash.zts
+      root: /games/lines
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
@@ -596,6 +604,11 @@ dependencies:
 
   - id: CaPusto/zeal-xonix
     repo: https://github.com/CaPusto/zeal-xonix.git
+    build:
+      artifacts:
+        - bin/zeal-xonix.bin
+        - bin/assets
+      root: /games/xonix
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils

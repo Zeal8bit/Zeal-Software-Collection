@@ -35,6 +35,8 @@ Projects marked with:
 * [Z Fighter](https://github.com/zoul0813/zeal-zfighter.git) by [@zoul0813](https://github.com/zoul0813): 2D side-scrolling space shooter for Zeal 8-bit Computer
 * [Zeal TETRIS](https://github.com/CaPusto/zeal-tetris.git) by [@CaPusto](https://github.com/CaPusto): TETRIS for the Zeal 8-bit Computer
 * [Zealmine](https://github.com/CaPusto/zealmine.git) by [@CaPusto](https://github.com/CaPusto): Minesweeper for Zeal 8-bit Computer
+* [zeal-lines](https://github.com/CaPusto/zeal-lines.git) by [@CaPusto](https://github.com/CaPusto): Lines game for Zeal 8-bit Computer
+* [zeal-xonix](https://github.com/CaPusto/zeal-xonix.git) by [@CaPusto](https://github.com/CaPusto): Xonix game for Zeal 8-bit Computer
 
 ## 💾 Demo
 * [Zeal Boing](https://github.com/zoul0813/zeal-boing.git) by [@zoul0813](https://github.com/zoul0813): Boing Ball-inspired demo for Zeal 8-bit Computer
