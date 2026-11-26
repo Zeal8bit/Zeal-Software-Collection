@@ -28,7 +28,7 @@ def write_json(path: Path, value: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-IMAGE_SIZES_MIB = (2, 16, 64, 128)
+IMAGE_SIZES_MIB = (4, 16, 64, 128)
 IMAGE_FILES = tuple(f"tf-{size}mib.img" for size in IMAGE_SIZES_MIB)
 DOWNLOAD_FILES = tuple(name + suffix for name in IMAGE_FILES
                        for suffix in (".sha256", ".zip"))

@@ -226,13 +226,13 @@ class BuilderTests(unittest.TestCase):
                     return subprocess.CompletedProcess(args, 0)
                 with patch.object(builder, "ROOT", root):
                     if mismatch:
-                        with self.assertRaisesRegex(RuntimeError, "contents differ.*2 MiB"):
+                        with self.assertRaisesRegex(RuntimeError, "contents differ.*4 MiB"):
                             builder.create_images(zde, checkout, output, content)
-                        self.assertEqual(sizes, [2])
+                        self.assertEqual(sizes, [4])
                         self.assertFalse(list(output.glob("*.img")))
                     else:
                         builder.create_images(zde, checkout, output, content)
-                        self.assertEqual(sizes, [2, 16, 64, 128])
+                        self.assertEqual(sizes, [4, 16, 64, 128])
                         for size, name in zip(IMAGE_SIZES_MIB, IMAGE_FILES):
                             self.assertEqual((output / name).stat().st_size, size * 1024 * 1024)
                             self.assertTrue((output / (name + ".sha256")).is_file())
@@ -465,7 +465,7 @@ class ReleaseTests(unittest.TestCase):
                             {"path": "games/game", "type": "file"}]}
         description = publisher.notes(report)
         self.assertIn("Which file should I download?", description)
-        for size in (2, 16, 64, 128):
+        for size in (4, 16, 64, 128):
             self.assertIn(f"`tf-{size}mib.img.zip`", description)
         self.assertIn("GitHub's automatic **Source code**", description)
         self.assertIn("| coreutils | `t:/bin/cat`<br>`t:/bin/ls` |", description)

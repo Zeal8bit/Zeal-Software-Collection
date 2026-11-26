@@ -45,7 +45,7 @@ Completed output is in `dist/community/`, or the directory selected with `--outp
 | File | Use |
 | --- | --- |
 | `tf-{size}mib.img.zip` | Download bundle; extract before flashing |
-| `tf-{size}mib.img` | Raw image in 2, 16, 64, or 128 MiB capacity |
+| `tf-{size}mib.img` | Raw image in 4, 16, 64, or 128 MiB capacity |
 | `tf-{size}mib.img.sha256` | Image checksum |
 | `README.md` | Included software, TF file tree, and failed or skipped projects |
 | `build-report.json` | Build results and source revisions |
@@ -60,7 +60,7 @@ Check an extracted image's checksum with:
 
 ```sh
 cd dist/community
-shasum -a 256 -c tf-2mib.img.sha256
+shasum -a 256 -c tf-4mib.img.sha256
 ```
 
 For live progress, use the workspace path printed at startup. Its `artifacts/`
