@@ -908,6 +908,29 @@ dependencies:
     aliases:
       - zealcc
 
+  - id: zoul0813/zeal-pascal
+    repo: https://github.com/zoul0813/zeal-pascal.git
+    depends_on:
+      - Zeal8bit/Zeal-NativeEmulator
+    build:
+      tool: make
+      args:
+        - dist
+      artifacts:
+        - bin/
+      root: /
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-pascal/main/docs/images/ide-menu.png
+      name: Zeal Pascal
+      category:
+        - language
+      description: Native Pascal IDE and compiler with an integrated editor for the Zeal 8-bit Computer
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - zpascal
+
   - id: zoul0813/zeal-forth
     repo: https://github.com/zoul0813/zeal-forth.git
     build:

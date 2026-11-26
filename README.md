@@ -68,6 +68,7 @@ Projects marked with:
 * [BBC Basic](https://github.com/Zeal8bit/Zeal-BBC-Basic.git) by [@Zeal8bit](https://github.com/Zeal8bit): BBC Basic port running natively on Zeal 8-bit OS
 * [Zealasm](https://github.com/Zeal8bit/Zealasm.git) by [@Zeal8bit](https://github.com/Zeal8bit): Z80 assembler written in Z80 assembly
 * [Zeal CC](https://github.com/zoul0813/zeal-cc.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: C compiler for Zeal 8-bit OS
+* [Zeal Pascal](https://github.com/zoul0813/zeal-pascal.git) by [@zoul0813](https://github.com/zoul0813): Native Pascal IDE and compiler with an integrated editor for the Zeal 8-bit Computer
 * [Zeal Forth](https://github.com/zoul0813/zeal-forth.git) by [@zoul0813](https://github.com/zoul0813) ⚠️: Forth Interpreter for Zeal 8-bit OS
 * [Zorth](https://github.com/Candid-Moe/Zorth.git) by [@Candid-Moe](https://github.com/Candid-Moe): Forth interpreter for Zeal 8-bit OS
 * [Onomata](https://github.com/chiralos/onomata-src.git) by [@chiralos](https://github.com/chiralos): Custom stack-based language for Zeal 8-bit OS
