@@ -43,6 +43,7 @@ Projects marked with:
 * [Zeal Plasma](https://github.com/zoul0813/zeal-plasma.git) by [@zoul0813](https://github.com/zoul0813): Text-mode plasma demo for Zeal
 * [Zeal Matrix](https://github.com/zoul0813/zeal-matrix.git) by [@zoul0813](https://github.com/zoul0813): Matrix demo for Zeal 8-bit Computer
 * [Zeal Truchet](https://github.com/zoul0813/zeal-truchet.git) by [@zoul0813](https://github.com/zoul0813): Truchet pattern demo using the Zeal video board DMA controller
+* [Zeal Starship](https://github.com/zoul0813/zeal-starship-demo.git) by [@zoul0813](https://github.com/zoul0813): 3D wireframe space-flight demo using ZVB bitmap mode, DMA and the RPU
 
 ## 💻 Software
 * [ZShell](https://github.com/zoul0813/zeal-zshell.git) by [@zoul0813](https://github.com/zoul0813): Shell for Zeal 8-bit OS with history and batch processing
