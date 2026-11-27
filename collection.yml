@@ -689,6 +689,22 @@ dependencies:
     aliases:
       - truchet
 
+  - id: zoul0813/zeal-starship-demo
+    repo: https://github.com/zoul0813/zeal-starship-demo.git
+    depends_on:
+      - Zeal8bit/Zeal-VideoBoard-SDK
+    metadata:
+      screenshot: https://raw.githubusercontent.com/zoul0813/zeal-starship-demo/main/docs/images/ships.png
+      name: Zeal Starship
+      category:
+        - demo
+      description: 3D wireframe space-flight demo using ZVB bitmap mode, DMA and the RPU
+      author:
+        name: zoul0813
+        link: https://github.com/zoul0813
+    aliases:
+      - starship
+
   # Software
   - id: zoul0813/zeal-zshell
     repo: https://github.com/zoul0813/zeal-zshell.git
