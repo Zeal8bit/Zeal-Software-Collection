@@ -23,16 +23,16 @@ jobs:
     outputs:
       changed: ${{ steps.inputs.outputs.changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
       - name: Install builder prerequisites
         run: python3 -m pip install 'PyYAML==6.0.3'
       - name: Restore last successful build inputs
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6.1.0
         with:
           path: tmp/community-inputs/baseline.json
           enableCrossOsArchive: true
@@ -49,7 +49,7 @@ jobs:
         if: steps.inputs.outputs.changed == 'true'
         id: project-cache
         continue-on-error: true
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6.1.0
         with:
           path: tmp/community-image-cache/snapshot/
           key: community-projects-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -61,7 +61,7 @@ jobs:
       - name: Cache successful project builds
         if: steps.inputs.outputs.changed == 'true' && steps.project-cache.outputs.cache-primary-key != '' && hashFiles('tmp/community-image-cache/snapshot/cache.json') != ''
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6.1.0
         with:
           path: tmp/community-image-cache/snapshot/
           key: ${{ steps.project-cache.outputs.cache-primary-key }}
@@ -73,7 +73,7 @@ jobs:
           fi
       - name: Save image and build diagnostics
         if: always() && steps.inputs.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: community-image
           path: dist/community/
@@ -87,13 +87,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: community-image
           path: dist/community
@@ -111,7 +111,7 @@ jobs:
         run: python3 assets/scripts/community_inputs.py --record --current dist/community/build-inputs.json
       - name: Cache successful build inputs
         if: steps.inputs.outputs.recorded == 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6.1.0
         with:
           path: tmp/community-inputs/baseline.json
           enableCrossOsArchive: true
