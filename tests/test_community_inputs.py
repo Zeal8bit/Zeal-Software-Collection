@@ -165,6 +165,16 @@ class InputGateTests(unittest.TestCase):
         self.report['items'][0].pop('source')
         self.assertFalse(self.record())
 
+    def test_baseline_requires_the_tags_used_during_the_build(self):
+        self.snapshot['projects']['owner/app']['tags'] = {
+            'refs/tags/v1': 'tag-object', 'refs/tags/v1^{}': 'app-one'}
+        self.assertFalse(self.record())
+        self.report['items'][0]['source_tags'] = {'refs/tags/v1': 'tag-object'}
+        self.assertTrue(self.record())
+        self.assertFalse(self.check())
+        self.report['items'][0]['source_tags']['refs/tags/v1'] = 'moved-tag'
+        self.assertFalse(self.record())
+
     def test_amd64_and_arm64_builds_share_the_same_input_baseline(self):
         self.snapshot['image_members'] = ['sha256:amd64', 'sha256:arm64']
         for digest in ['sha256:amd64', 'sha256:arm64', 'sha256:image-one']:

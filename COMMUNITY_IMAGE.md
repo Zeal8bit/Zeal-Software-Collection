@@ -32,6 +32,12 @@ To build without reading or updating the build cache:
 .venv/bin/python assets/scripts/build_community_image.py --no-cache
 ```
 
+To build up to two projects concurrently in isolated ZDE workspaces:
+
+```sh
+.venv/bin/python assets/scripts/build_community_image.py --jobs 2
+```
+
 To choose another output directory under this checkout's `dist/`:
 
 ```sh
@@ -96,7 +102,10 @@ apply changes to `collection.yml`.
 The **Community TF image** workflow runs when `collection.yml` changes on `main`
 or `feature/community-image`, nightly at **07:17 UTC**, or manually through
 **Actions → Community TF image → Run workflow**. Branch builds create draft
-releases. Main builds publish when build inputs change.
+releases. When build inputs match the last successful release, CI skips the
+build. Otherwise CI restores reusable project builds, builds up to two projects
+at a time after their dependencies finish, and stages the results in dependency
+order before building and verifying each image size.
 
 For failed runs, inspect the Actions log and download the `community-image`
 artifact. Artifacts are retained for 14 days.

@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import tempfile
 
@@ -27,6 +28,35 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
+def tag_refs(path):
+    refs = subprocess.check_output(
+        ["git", "-C", str(path), "for-each-ref",
+         "--format=%(refname) %(objectname)", "refs/tags"], text=True)
+    return dict(line.split(" ", 1) for line in refs.splitlines())
+
+
+def remove_stale_entries(source, target):
+    """Preserve directories already visible through a container bind mount."""
+    for child in target.iterdir():
+        if child.name == ".git":
+            continue
+        saved = source / child.name
+        if child.is_symlink():
+            child.unlink()
+        elif child.is_file():
+            if saved.is_symlink() or not saved.is_file():
+                child.unlink()
+            else:
+                mode = child.stat().st_mode
+                if not mode & stat.S_IWUSR:
+                    child.chmod(mode | stat.S_IWUSR)
+        elif child.is_dir():
+            if saved.is_dir() and not saved.is_symlink():
+                remove_stale_entries(saved, child)
+            else:
+                shutil.rmtree(child)
+
+
 class BuildCache:
     def __init__(self, directory, context, catalog, home, state):
         self.directory = directory
@@ -34,9 +64,11 @@ class BuildCache:
         self.catalog = catalog
         self.home = home
         self.state = state
+        self.restored_projects = home.parent / "cache-restored"
         self.restored = {}
         self.keys = {}
         self.revisions = {}
+        self.tags = {}
 
     def project(self, dep_id):
         relative = Path(self.catalog[dep_id]["path"]).relative_to("/home/zeal8bit")
@@ -50,15 +82,33 @@ class BuildCache:
         return subprocess.check_output(["git", "-C", str(self.project(dep_id)),
                                         "rev-parse", "HEAD"], text=True).strip()
 
+    def tag_refs(self, dep_id):
+        if self.catalog[dep_id]["definition"].get("tag") is not True:
+            return {}
+        return tag_refs(self.project(dep_id))
+
+    def clear_restored_tags(self, dep_id):
+        # ZDE fetches moved tags but does not prune deleted ones.
+        if dep_id in self.restored:
+            tags = self.tag_refs(dep_id)
+            if tags:
+                subprocess.run(["git", "-C", str(self.project(dep_id)), "update-ref", "--stdin"],
+                               input="".join(f"delete {tag}\n" for tag in tags),
+                               text=True, check=True)
+
     def key(self, dep_id):
         dep = self.catalog[dep_id]
         revision = self.revision(dep_id)
         self.revisions[dep_id] = revision
+        self.tags[dep_id] = self.tag_refs(dep_id)
         # The effective recipe includes ZDE overrides; metadata does not affect compilation.
         definition = {key: value for key, value in dep["definition"].items()
                       if key not in {"metadata", "aliases"}}
+        if isinstance(definition.get("build"), dict):
+            definition["build"] = {key: value for key, value in definition["build"].items()
+                                   if key not in {"artifacts", "root", "stage"}}
         value = fingerprint({"context": self.context, "id": dep_id, "revision": revision,
-                             "definition": definition,
+                             "definition": definition, "tags": self.tags[dep_id],
                              "dependencies": {parent: self.keys[parent] for parent in dep["parents"]}})
         self.keys[dep_id] = value
         return value
@@ -114,21 +164,22 @@ class BuildCache:
                 shutil.rmtree(path, ignore_errors=True)
             (self.state / "deps-lock.yml").unlink(missing_ok=True)
             self.restored = {}
-            shutil.rmtree(self.home.parent / "cache-restored", ignore_errors=True)
+            shutil.rmtree(self.restored_projects, ignore_errors=True)
             print(f"Build cache ignored: {exc}", flush=True)
 
     def reuse(self, dep_id):
         """Git sync can reset tracked generated libraries; preserve the built outputs."""
         # A concurrent run may have replaced the shared snapshot after our restore.
         # Keep each run's private copy instead of reading that shared snapshot again.
-        source = self.home.parent / "cache-restored" / fingerprint(dep_id)
+        source = self.restored_projects / fingerprint(dep_id)
         target = self.project(dep_id)
-        shutil.rmtree(target)
-        shutil.copytree(source, target, symlinks=True)
+        remove_stale_entries(source, target)
+        shutil.copytree(source, target, symlinks=True, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns(".git"))
 
     def preserve_restored(self):
         for dep_id in self.restored:
-            target = self.home.parent / "cache-restored" / fingerprint(dep_id)
+            target = self.restored_projects / fingerprint(dep_id)
             shutil.copytree(self.project(dep_id), target, symlinks=True)
 
     def discard(self, dep_id):
@@ -136,7 +187,7 @@ class BuildCache:
 
     def verify_sources(self):
         for dep_id, revision in self.revisions.items():
-            if self.revision(dep_id) != revision:
+            if self.revision(dep_id) != revision or self.tag_refs(dep_id) != self.tags[dep_id]:
                 raise RuntimeError(f"Source changed during the build: {dep_id}; run a fresh build")
 
     def save(self, report):

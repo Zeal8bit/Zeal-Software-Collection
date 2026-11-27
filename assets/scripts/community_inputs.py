@@ -141,10 +141,25 @@ def check_inputs(baseline_path, current_path):
         baseline = json.loads(baseline_path.read_text())
     except (OSError, ValueError):
         baseline = None
-    changed = current != baseline
-    print('Build inputs changed or no successful baseline; building.' if changed else
-          'All build inputs unchanged; skipping image build and publication.', flush=True)
-    return changed
+    if current == baseline:
+        print('All build inputs unchanged; skipping image build and publication.', flush=True)
+        return False
+    if not isinstance(baseline, dict) or not isinstance(baseline.get('projects'), dict):
+        print('No successful input baseline; building.', flush=True)
+        return True
+    if not isinstance(current.get('projects'), dict):
+        print('Current project inputs are incomplete; building.', flush=True)
+        return True
+    changed_inputs = sorted(key for key in (current.keys() | baseline.keys()) - {'projects'}
+                            if current.get(key) != baseline.get(key))
+    previous_projects, projects = baseline['projects'], current['projects']
+    changed_projects = sorted(key for key in previous_projects.keys() | projects.keys()
+                              if previous_projects.get(key) != projects.get(key))
+    if changed_inputs:
+        print('Changed build inputs: ' + ', '.join(changed_inputs), flush=True)
+    if changed_projects:
+        print('Changed project inputs: ' + ', '.join(changed_projects), flush=True)
+    return True
 
 
 def record_inputs(current_path, report_path, baseline_path):
@@ -157,9 +172,14 @@ def record_inputs(current_path, report_path, baseline_path):
     projects = current['projects']
     actual = {row['id']: row.get('source', {}).get('current_commit') for row in report['items']}
     expected = {key: dep['commit'] for key, dep in projects.items()}
+    actual_tags = {row['id']: row['source_tags'] for row in report['items'] if 'source_tags' in row}
+    # The object ID of an annotated tag already identifies its peeled target.
+    expected_tags = {key: {ref: value for ref, value in dep['tags'].items() if not ref.endswith('^{}')}
+                     for key, dep in projects.items() if 'tags' in dep}
     if (report.get('success') is not True or report.get('status') != 'complete'
             or any(row['status'] != 'included' for row in report.get('kernels', []))
             or actual != expected
+            or actual_tags != expected_tags
             or report.get('zde_commit') != current['zde_commit']
             or report.get('zde_image', '').rsplit('@', 1)[-1]
                not in [current['image_digest'], *current['image_members']]

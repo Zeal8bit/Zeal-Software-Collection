@@ -16,8 +16,9 @@ from datetime import datetime, timezone
 from community_image import IMAGE_SIZES_MIB, bundle_lock, conflicts, export_bundle, manifest, write_downloads, write_json
 
 from community_licenses import write_distribution
-from community_cache import BuildCache, fingerprint, kernel_dependencies
-from community_kernels import build_kernels, kernel_specs
+from community_cache import BuildCache, fingerprint, kernel_dependencies, tag_refs
+from community_kernels import build_kernels, kernel_specs, project_path
+from community_parallel import IsolatedBuilds, install_projects
 
 ROOT = Path(__file__).resolve().parents[2]
 ZDE_REPO = "https://github.com/zoul0813/zeal-dev-environment.git"
@@ -90,53 +91,50 @@ def ordered(catalog, selected):
     return result
 
 
-def install_and_stage(ids, catalog, zde, staging, report, report_path, *, cache=None):
-    """Failures are isolated per item, including dependency and staging failures."""
-    installed = {}
-    for dep_id in ids:
-        row = {"id": dep_id, "status": "installing", "stage": "install",
-               "dependencies": list(catalog[dep_id]["parents"])}
-        report["items"].append(row)
-        write_json(report_path, report)
-        failed_parents = [p for p in catalog[dep_id]["parents"] if not installed.get(p)]
-        if failed_parents:
-            row.update(status="failed", reason="Failed dependencies: " + ", ".join(failed_parents))
-            installed[dep_id] = False
-            write_json(report_path, report)
-            continue
-        result = zde("deps", "install", dep_id)
-        if result.returncode == 0 and cache is not None:
-            key = cache.key(dep_id)
-            previous = cache.restored.get(dep_id)
-            if previous and previous["key"] == key and catalog[dep_id]["installed"]:
-                cache.reuse(dep_id)
-                row["cache"] = "hit"
-                print(f"Build cache hit: {dep_id}", flush=True)
-            else:
-                row["cache"] = "miss"
-                # An installed checkout can be synced without being rebuilt by ZDE.
-                # Remove it on a changed key so even Make projects build from scratch.
-                if catalog[dep_id]["installed"]:
-                    print(f"Build inputs changed; rebuilding cleanly: {dep_id}", flush=True)
-                    cache.discard(dep_id)
-                    result = zde("deps", "install", dep_id)
-                    if result.returncode == 0:
-                        cache.key(dep_id)
-        if result.returncode:
-            if cache is not None:
-                cache.keys.pop(dep_id, None)
-                cache.revisions.pop(dep_id, None)
-            row["reason"] = "Install/build failed; see build.log"
-            installed[dep_id] = False
-            row["status"] = "failed"
+def install_project(dep_id, row, catalog, zde, cache):
+    if cache is not None:
+        cache.clear_restored_tags(dep_id)
+    result = zde("deps", "install", dep_id)
+    if result.returncode == 0 and cache is not None:
+        key = cache.key(dep_id)
+        previous = cache.restored.get(dep_id)
+        if previous and previous["key"] == key and catalog[dep_id]["installed"]:
+            cache.reuse(dep_id)
+            row["cache"] = "hit"
+            print(f"Build cache hit: {dep_id}", flush=True)
         else:
-            installed[dep_id] = True
-            row.update(status="installed", stage="stage")
-        write_json(report_path, report)
+            row["cache"] = "miss"
+            # ZDE can sync an installed checkout without rebuilding it.
+            if catalog[dep_id]["installed"]:
+                print(f"Build inputs changed; rebuilding cleanly: {dep_id}", flush=True)
+                cache.discard(dep_id)
+                result = zde("deps", "install", dep_id)
+                if result.returncode == 0:
+                    cache.key(dep_id)
+    if result.returncode:
+        if cache is not None:
+            cache.keys.pop(dep_id, None)
+            cache.revisions.pop(dep_id, None)
+            cache.tags.pop(dep_id, None)
+        row.update(status="failed", reason="Install/build failed; see build.log")
+    else:
+        row.update(status="installed", stage="stage")
 
+
+def install_and_stage(ids, catalog, zde, staging, report, report_path, *, cache=None):
+    """Install projects, then stage them in dependency order with collision checks."""
+    def install(dep_id, row):
+        install_project(dep_id, row, catalog, zde, cache)
+
+    install_projects(ids, catalog, install, report, report_path)
+    stage_projects(catalog, lambda dep_id, _: zde("deps", "stage", "tf", dep_id).returncode,
+                   staging, report, report_path)
+
+
+def stage_projects(catalog, stage, staging, report, report_path):
     for row in report["items"]:
         dep_id = row["id"]
-        if not installed[dep_id]:
+        if row["status"] != "installed":
             continue
         if catalog[dep_id]["stage_disabled"]:
             row.update(status="skipped", reason="Staging disabled by ZDE catalog")
@@ -148,8 +146,7 @@ def install_and_stage(ids, catalog, zde, staging, report, report_path, *, cache=
         backup = staging.with_name("tf-backup")
         shutil.copytree(staging, backup, symlinks=True)
         try:
-            result = zde("deps", "stage", "tf", dep_id)
-            if result.returncode:
+            if stage(dep_id, before):
                 raise ValueError("Staging failed or artifacts missing; see build.log")
             after, _ = manifest(staging, filter_names=False)
             collisions = conflicts(before, after)
@@ -216,7 +213,7 @@ def install_dependency(dep_id):
     return DepCatalog().install_dep(dep_id, allow_required=True, include_dependencies=False)
 
 
-def build(latest_output, *, use_cache=True):
+def build(latest_output, *, use_cache=True, jobs=1):
     # Fail before creating a workspace or printing Docker/Podman diagnostics.
     try:
         import yaml
@@ -268,13 +265,24 @@ def build(latest_output, *, use_cache=True):
         env = dict(os.environ, ZDE_PATH=str(checkout), ZDE_USER_PATH=str(state),
                    ZDE_IMAGE_REF=image_id, ZDE_STRICT_EXIT="1", HOST_CWD=str(ROOT),
                    CONTAINER_CMD=runtime)
-        def zde(*args):
+        if jobs > 1:
+            # Compose run gives each container its own name. Share the network
+            # across workers to avoid leaving one network per project.
+            env["COMPOSE_PROJECT_NAME"] = work.name
+
+        def run_zde(project, user_state, source, log, *args):
             if args[:2] == ("deps", "install"):
                 # Do not sync parents again while building a child: that can reset
                 # tracked SDK libraries restored from the cache.
                 args = ("exec", "python3", "/src/assets/scripts/build_community_image.py",
                         "--install-dependency", args[2])
-            return run([checkout / "zde", *args], env=env, log=output / "build.log")
+            command_env = dict(env, ZDE_PATH=str(project), ZDE_USER_PATH=str(user_state),
+                               HOST_CWD=str(source), PWD=str(source))
+            return run([project / "zde", "--no-tty", *args], cwd=source, env=command_env, log=log)
+
+        def zde(*args):
+            return run_zde(checkout, state, ROOT, output / "build.log", *args)
+
         def catalog():
             result = zde("exec", "python3", "-c", CATALOG_QUERY)
             if result.returncode:
@@ -284,31 +292,54 @@ def build(latest_output, *, use_cache=True):
             return {d["id"]: d for d in json.loads(payload)}
         configure_staging(zde)
         effective = kernel_dependencies(catalog())
+        required = [dep["id"] for dep in effective.values() if dep["required"]]
+        ids = ordered(effective, required + selected + ["Zeal8bit/ZealFS"])
+        isolated = None
+        if jobs > 1:
+            isolated = IsolatedBuilds(work, checkout, state, ROOT, effective, ids,
+                                      run_zde, output / "build.log")
+            if isolated.paths_overlap:
+                print("Overlapping project directories; building serially.", flush=True)
+                isolated = None
         cache = None
         if use_cache:
+            platform = checked([runtime, "image", "inspect", image_id, "--format",
+                                "{{.Os}}/{{.Architecture}}"]).strip()
             context = {"version": 1, "zde_commit": report["zde_commit"], "image": image_id,
-                       "platform": "linux/amd64", "builder": fingerprint([
+                       "platform": platform, "builder": fingerprint([
                            Path(__file__).read_text(),
-                           (ROOT / "assets/scripts/community_cache.py").read_text()])}
+                           (ROOT / "assets/scripts/community_cache.py").read_text(),
+                           (ROOT / "assets/scripts/community_parallel.py").read_text()])}
             cache = BuildCache(ROOT / "tmp/community-image-cache", context,
                                effective, checkout / "home", state)
             cache.restore()
             effective = kernel_dependencies(catalog())
             cache.catalog = effective
         report["cache_enabled"] = use_cache
-        required = [dep["id"] for dep in effective.values() if dep["required"]]
-        ids = ordered(effective, required + selected + ["Zeal8bit/ZealFS"])
+        report["project_jobs"] = jobs if isolated is not None else 1
         staging = checkout / "mnt" / "tf"
         if staging.exists():
             shutil.rmtree(staging)
         staging.mkdir(parents=True)
-        install_and_stage(ids, effective, zde, staging, report, output / "build-report.json", cache=cache)
+        report_path = output / "build-report.json"
+        if isolated is None:
+            install_and_stage(ids, effective, zde, staging, report, report_path, cache=cache)
+        else:
+            isolated.catalog = effective
+            isolated.cache = cache
+            install_projects(ids, effective, isolated.installer(install_project), report, report_path,
+                             jobs=jobs, finish=isolated.finish)
+            stage_projects(effective, lambda dep_id, before: isolated.stage(dep_id, staging, before),
+                           staging, report, report_path)
         if cache is not None:
             cache.verify_sources()
             cache.save(report)
         final_catalog = catalog()
         for row in report["items"]:
-            row["source"] = final_catalog[row["id"]]["revision"]
+            dep = final_catalog[row["id"]]
+            row["source"] = dep["revision"]
+            if dep["definition"].get("tag") is True and row["source"].get("current_commit"):
+                row["source_tags"] = tag_refs(project_path(checkout, final_catalog, row["id"]))
         tools_failed = any(r["id"] == "Zeal8bit/ZealFS" and r["status"] == "failed"
                            for r in report["items"])
         if tools_failed or not final_catalog["Zeal8bit/ZealFS"]["installed"]:
@@ -384,10 +415,14 @@ def main():
     parser.add_argument("--retry", metavar="APP",
                         help="Update and rebuild one app in the last build workspace; no image creation")
     parser.add_argument("--no-cache", action="store_true", help="Build fresh without reading or updating the build cache")
+    parser.add_argument("--jobs", type=int, default=1,
+                        help="Maximum concurrent project builds (default: 1)")
     parser.add_argument("--install-dependency", help=argparse.SUPPRESS)
     parser.add_argument("--verify-image", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--manifest-output", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.jobs < 1:
+        parser.error("--jobs must be at least 1")
     try:
         if args.install_dependency:
             return install_dependency(args.install_dependency)
@@ -399,7 +434,7 @@ def main():
             if args.retry:
                 retry_app(output, args.retry)
             else:
-                build(output, use_cache=not args.no_cache)
+                build(output, use_cache=not args.no_cache, jobs=args.jobs)
     except Exception as exc:
         print(f"Community image build failed: {exc}", file=sys.stderr)
         return 1

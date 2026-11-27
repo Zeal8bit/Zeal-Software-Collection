@@ -101,6 +101,36 @@ class CacheTests(unittest.TestCase):
         self.run_build(context=dict(self.context, image="image@sha256:two"))
         self.assertEqual(self.built, self.order)
 
+    def test_staging_recipe_changes_reuse_compiled_outputs(self):
+        self.run_build()
+        self.catalog["app"]["definition"]["build"].update(artifacts=["bin/app"], root="/apps")
+        self.built.clear()
+        self.run_build()
+        self.assertEqual(self.built, [])
+
+    def test_tag_changes_invalidate_a_fixed_source_revision(self):
+        catalog = {KERNEL: {"path": "/home/zeal8bit/os", "definition": {"tag": True}, "parents": []}}
+        cache = BuildCache(self.root / "cache", self.context, catalog, self.root / "home", self.root)
+        project = cache.project(KERNEL)
+        project.mkdir(parents=True)
+
+        def git(*args):
+            subprocess.run(["git", "-C", str(project), "-c", "user.name=Cache Test",
+                            "-c", "user.email=test@example.com", *args], check=True)
+
+        git("init", "-q")
+        git("commit", "-qm", "initial", "--allow-empty")
+        git("tag", "v1")
+        original = cache.key(KERNEL)
+        cache.restored[KERNEL] = {"key": original}
+        cache.clear_restored_tags(KERNEL)
+        self.assertEqual(cache.tag_refs(KERNEL), {})
+        with self.assertRaisesRegex(RuntimeError, "Source changed"):
+            cache.verify_sources()
+        self.assertNotEqual(cache.key(KERNEL), original)
+        git("tag", "v1")
+        self.assertEqual(cache.key(KERNEL), original)
+
     def test_failed_project_and_its_dependents_are_retried(self):
         _, report, _ = self.run_build(broken="lib")
         self.assertEqual([row["id"] for row in report["items"] if row["status"] == "failed"],
@@ -152,7 +182,13 @@ class CacheTests(unittest.TestCase):
     def test_private_restore_survives_shared_snapshot_replacement(self):
         first, _, _ = self.run_build()
         second, _, _ = self.run_build()
-        original = (second.project("app") / "binary").read_text()
+        project = second.project("app")
+        directory_inode = project.stat().st_ino
+        original = (project / "binary").read_text()
+        (project / "binary").write_text("reset during sync")
+        (project / "stale").touch()
         (first.directory / "snapshot/projects" / fingerprint("app") / "binary").write_text("another run")
         second.reuse("app")
-        self.assertEqual((second.project("app") / "binary").read_text(), original)
+        self.assertEqual((project / "binary").read_text(), original)
+        self.assertEqual(project.stat().st_ino, directory_inode)
+        self.assertFalse((project / "stale").exists())

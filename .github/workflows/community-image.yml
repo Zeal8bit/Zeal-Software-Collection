@@ -45,9 +45,26 @@ jobs:
       - name: Test community image scripts
         if: steps.inputs.outputs.changed == 'true'
         run: python3 -m unittest discover -s tests -v
+      - name: Restore successful project builds
+        if: steps.inputs.outputs.changed == 'true'
+        id: project-cache
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: tmp/community-image-cache/snapshot/
+          key: community-projects-v1-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            community-projects-v1-${{ runner.os }}-${{ runner.arch }}-
       - name: Build and verify community image
         if: steps.inputs.outputs.changed == 'true'
-        run: python3 assets/scripts/build_community_image.py --no-cache
+        run: python3 assets/scripts/build_community_image.py --jobs 2
+      - name: Cache successful project builds
+        if: steps.inputs.outputs.changed == 'true' && steps.project-cache.outputs.cache-primary-key != '' && hashFiles('tmp/community-image-cache/snapshot/cache.json') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: tmp/community-image-cache/snapshot/
+          key: ${{ steps.project-cache.outputs.cache-primary-key }}
       - name: Attach checked build inputs
         if: steps.inputs.outputs.changed == 'true'
         run: |
