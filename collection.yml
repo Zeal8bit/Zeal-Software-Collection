@@ -900,6 +900,8 @@ dependencies:
 
   - id: Zeal8bit/Zealasm
     repo: https://github.com/Zeal8bit/Zealasm.git
+    build:
+      root: /bin
     metadata:
       name: Zealasm
       category:
@@ -916,6 +918,13 @@ dependencies:
     depends_on:
       - Zeal8bit/Zeal-VideoBoard-SDK
       - zoul0813/zeal-coreutils
+      - Zeal8bit/Zealasm
+    build:
+      tool: cmake
+      root: /
+      artifacts:
+        - dist/zeal-cc/bin
+        - dist/zeal-cc/lib
     metadata:
       name: Zeal CC
       category:
